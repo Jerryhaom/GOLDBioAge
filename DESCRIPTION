@@ -1,0 +1,18 @@
+Package: GOLDBioAge
+Type: Package
+Title: GOLDBioAge: a R package to calculate biological age based on Gompertz law 
+Version: 0.1.0
+Author: Meng Hao
+Maintainer: <haombio@gmail.com>
+Description: Gompertz law based biological age (GOLD BioAge) :  
+              simple and practical biological aging clocks to capture morbidity and mortality risks 
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+Imports: 
+    flexsurv,
+    stats,
+    survival
+Depends: 
+    R (>= 2.10)
