@@ -92,5 +92,3 @@ gold_bioage <- function(d4, var) {
     `Bioage` = data
   )
 }
-
-
