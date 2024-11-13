@@ -51,6 +51,22 @@ gold_bioage <- function(d4, var) {
   )
   fitg2
 
+  ce=fitg2$res[,1]
+  ce[3]=coef1[3]
+
+  fitg2 <- flexsurv::flexsurvreg(
+    formula = as.formula(paste(
+      "survival::Surv(time, status) ~",
+      paste(var, collapse = "+")
+    )),
+    fixedpars=c(3),
+    inits = ce,
+    data = data1, dist = "gompertz"
+  )
+
+  fitg2$res
+  coef2=fitg2$res[,1]
+
   coef2 <- fitg2$res[, 1]
 
   ####
@@ -76,3 +92,5 @@ gold_bioage <- function(d4, var) {
     `Bioage` = data
   )
 }
+
+
