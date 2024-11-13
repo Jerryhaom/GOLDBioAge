@@ -1,5 +1,5 @@
 #' gold_bioage
-#' @description Develop biological age through Gompertz hazard function
+#' @description construct Gompertz law based biological age (GOLD BioAge)
 #' \itemize{
 #'  \item Model 1: Gompertz regression with Surv(time, status) ~ age
 #'  \item Model 2: Gompertz regression with Surv(time, status) ~ age + Biomarkers
