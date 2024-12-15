@@ -7,7 +7,7 @@ install.packages("devtools") <br>
 devtools::install_github("Jerryhaom/GOLDBioAge") <br>
 
 # Examples
-library(GOLDBioAge)
+library(GOLDBioAge) <br>
 head(NHANES4) <br>
 var <- c("age", "albumin", "alp", "creat","glucose_mmol","lymph","mcv", "rdw", "wbc", "ggt") <br>
 bioage <- gold_bioage(NHANES4, var) <br>
