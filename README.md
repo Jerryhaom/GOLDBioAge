@@ -13,5 +13,5 @@ var <- c("age", "albumin", "alp", "creat","glucose_mmol","lymph","mcv", "rdw", "
 bioage <- gold_bioage(NHANES4, var) <br>
 
 # Citation <br>
-Meng Hao et al. Meng Hao et al. Gompertz Law-Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Aging to Capture Morbidity and Mortality Risks. doi: 10.1101/2024.11.14.24317305
+Meng Hao et al. Gompertz Law-Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Aging to Capture Morbidity and Mortality Risks. doi: 10.1101/2024.11.14.24317305
 
