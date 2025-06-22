@@ -1,5 +1,5 @@
 # GOLD BioAge <br>
-This package provides biological aging clocks measurements based on Gompertz or Cox regression. <br>
+This package provides measurements of biological aging clocks based on Gompertz or Cox regression. <br>
 The example data was downloaded from the National Health and Nutrition Examination Survey (NHANES). 
 
 # INSTALL <br>
