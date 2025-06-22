@@ -9,10 +9,14 @@ Description: Gompertz Law-Based Biological Age (GOLD BioAge) :
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Imports: 
     flexsurv,
     stats,
     survival
 Depends: 
     R (>= 2.10)
+Roxygen: list(markdown = TRUE)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

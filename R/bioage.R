@@ -1,20 +1,26 @@
-#' gold_bioage
-#' @description Calculate biological age
-#' \itemize{
-#'  \item Model 1: Gompertz/Cox regression with Surv(time, status) ~ age
-#'  \item Model 2: Gompertz/Cox regression with Surv(time, status) ~ age + Biomarkers
-#' }
-#' @param d4 Dataframe,containing survival information (time, status)
-#' @param var Variables for developing biological age (Age and Biomarkers)
+#' Calculate biological age using Gompertz model
 #'
-#' @return a list
+#' @description
+#' Computes biological age based on two Gompertz regression models:
 #' \itemize{
-#' \item coef1, Model 1 cofficients
-#' \item coef2, Model 2 cofficients
-#' \item coefficients, Biological age cofficients
-#' \item Bioage, Biological age data.frame
+#'   \item Gompertz Model 1: Surv(time, status) ~ age
+#'   \item Gompertz Model 2: Surv(time, status) ~ age + Biomarkers
 #' }
-
+#'
+#' @param d4 Dataframe containing survival information (time, status)
+#' @param var Character vector of variable names (must include 'age')
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item model1_coef: Coefficients from Model 1
+#'   \item model2_coef: Coefficients from Model 2
+#'   \item coefficients: Biological age coefficients
+#'   \item Bioage: Dataframe with calculated biological age
+#' }
+#'
+#' @importFrom stats as.formula na.omit
+#' @importFrom flexsurv flexsurvreg
+#' @importFrom survival Surv
 #' @export
 #'
 #' @examples
@@ -26,7 +32,6 @@
 #' )
 #'
 #' GOLD.bioage <- gold_bioage(NHANES4, var)
-#' Cox.bioage <- cox_bioage(NHANES4, var)
 
 gold_bioage <- function(d4, var) {
   data <- data.frame(
@@ -76,7 +81,7 @@ gold_bioage <- function(d4, var) {
   rownames(coef21) <- var
   coef21
 
-  x <- as.matrix(data[, var]) %*% coef21
+  x <- as.matrix(data[, var]) %*% as.matrix(coef21)
   pr <- predict(fitg1, type = "hazard", times = c(0))
   pr2 <- predict(fitg2, type = "hazard", times = c(0))
   risk <- pr$.pred_hazard
@@ -92,46 +97,5 @@ gold_bioage <- function(d4, var) {
     `model2 coef` = coef2,
     `coefficients` = coef21,
     `GOLDBioage` = data
-  )
-}
-
-cox_bioage <- function(d4, var) {
-  data <- data.frame(
-    time = d4$time,
-    status = d4$status,
-    d4[, var]
-  )
-  data <- na.omit(data)
-
-  data1 <- data
-  fitg1 <- survival::coxph(Surv(time, status) ~ age, data = data1)
-  coef1 <- coef(fitg1)
-
-  ############
-  coef_fixed <- coef1[1]
-  formula_str <- paste0("Surv(time, status) ~ offset(", coef_fixed, " * age) + ", 
-                        paste(sel[-1], collapse = " + "))
-  fit_fixed <- survival::coxph(as.formula(formula_str), data = data1)
-  coef2 = c(coef_fixed, coef(fit_fixed))
-
-  risk <- exp(predict(fitg1, type = "lp"))
-  risk2 <- exp(predict(fit_fixed, type = "lp")) 
-
-  coef21=matrix(coef2[1:length(coef2)])/coef1[1]
-  rownames(coef21)=sel
-  coef21
-  
-  x=as.matrix(data[,sel]) %*% coef21
-  la<-risk/risk2
-  
-  x0=mean(log(la)/coef1[1]) #(coef2[1]-coef1[1])
-  bioage <- x0 + x
-  data$Coxbioage <- bioage
-
-  list(
-    `model1 coef` = coef1,
-    `model2 coef` = coef2,
-    `coefficients` = coef21,
-    `CoxBioage` = data
   )
 }

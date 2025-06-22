@@ -10,7 +10,11 @@ devtools::install_github("Jerryhaom/GOLDBioAge") <br>
 library(GOLDBioAge) <br>
 head(NHANES4) <br>
 var <- c("age", "albumin", "alp", "creat","glucose_mmol","lymph","mcv", "rdw", "wbc", "ggt") <br>
+#calculate bioage based on Gompertz models
 bioage <- gold_bioage(NHANES4, var) <br>
+#calculate bioage based on cox regressions
+bioage <- cox_bioage(NHANES4, var) <br>
+
 
 # Citation <br>
 Meng Hao et al. Gompertz Law-Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Aging to Capture Morbidity and Mortality Risks. doi: 10.1101/2024.11.14.24317305
