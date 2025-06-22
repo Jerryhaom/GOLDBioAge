@@ -10,9 +10,9 @@ devtools::install_github("Jerryhaom/GOLDBioAge") <br>
 library(GOLDBioAge) <br>
 head(NHANES4) <br>
 var <- c("age", "albumin", "alp", "creat","glucose_mmol","lymph","mcv", "rdw", "wbc", "ggt") <br>
-#calculate bioage based on Gompertz models
+#calculate bioage based on Gompertz models <br>
 bioage <- gold_bioage(NHANES4, var) <br>
-#calculate bioage based on cox regressions
+#calculate bioage based on cox regressions <br>
 bioage <- cox_bioage(NHANES4, var) <br>
 
 
