@@ -15,7 +15,9 @@ bioage <- gold_bioage(NHANES4, var) <br>
 #calculate bioage based on cox regressions <br>
 bioage <- cox_bioage(NHANES4, var) <br>
 
+# More information
+https://github.com/Jerryhaom/GOLDBioAgeWeb.io <br>
 
-# Citation <br>
-Meng Hao et al. Gompertz Law-Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Aging to Capture Morbidity and Mortality Risks. doi: 10.1101/2024.11.14.24317305
-
+<br>
+# Contact Information: haombio@gmail.com <br>
+Citation: M. Hao, H. Zhang, J. Wu, Y. Huang, X. Li, M. Wang, S. Wang, J. Wang, J. Chen, Z. jun Bao, L. Jin, X. Wang, Z. Hu, S. Jiang, Y. Li, Gompertz Law-Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Ageing to Capture Morbidity and Mortality Risks. Adv. Sci. 2025, e01765. https://doi.org/10.1002/advs.202501765 <br>
