@@ -18,6 +18,5 @@ bioage <- cox_bioage(NHANES4, var) <br>
 # More information
 https://github.com/Jerryhaom/GOLDBioAgeWeb.io <br>
 
-<br>
-# Contact Information: haombio@gmail.com <br>
+Contact Information: haombio@gmail.com <br>
 Citation: M. Hao, H. Zhang, J. Wu, Y. Huang, X. Li, M. Wang, S. Wang, J. Wang, J. Chen, Z. jun Bao, L. Jin, X. Wang, Z. Hu, S. Jiang, Y. Li, Gompertz Law-Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Ageing to Capture Morbidity and Mortality Risks. Adv. Sci. 2025, e01765. https://doi.org/10.1002/advs.202501765 <br>
