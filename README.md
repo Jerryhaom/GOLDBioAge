@@ -15,6 +15,8 @@ bioage <- gold_bioage(NHANES4, var) <br>
 #calculate bioage based on cox regressions <br>
 bioage <- cox_bioage(NHANES4, var) <br>
 
+#Coefficients for GOLD and Light Bioage in public datasets: Coefficients.md file
+
 # More information
 https://github.com/Jerryhaom/GOLDBioAgeWeb.io <br>
 
