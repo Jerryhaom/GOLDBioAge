@@ -8,10 +8,24 @@ devtools::install_github("Jerryhaom/GOLDBioAge") <br>
 
 # Examples
 library(GOLDBioAge) <br>
+#Load dataset
+data(NHANES4)
 head(NHANES4) <br>
 var <- c("age", "albumin", "alp", "creat","glucose_mmol","lymph","mcv", "rdw", "wbc", "ggt") <br>
-#calculate bioage based on Gompertz models <br>
-bioage <- gold_bioage(NHANES4, var) <br>
+#calculate bioage based on Gompertz models (without feature selection) <br>
+bioage <- gold_bioage(NHANES4, var) <br><br>
+
+#With LASSO feature selection <br>
+result2 <- gold_bioage(NHANES4, var, 
+                       feature_selection = TRUE,
+                       selection_method = "lasso")
+
+#With Elasticnet feature selection <br>
+result3 <- gold_bioage(NHANES4, var, 
+                       feature_selection = TRUE,
+                       selection_method = "elasticnet",
+                       alpha = 0.5)
+
 #calculate bioage based on cox regressions <br>
 bioage <- cox_bioage(NHANES4, var) <br>
 
