@@ -111,7 +111,8 @@ gold_bioage <- function(d4, var, feature_selection = FALSE,
                                nfolds = nfolds)
     
     # Get selected variables (non-zero coefficients at lambda.1se)
-    coefs <- as.matrix(coef(cv_fit, s = "lambda.1se"))
+    # coefs <- as.matrix(coef(cv_fit, s = "lambda.1se"))
+    coefs <- as.matrix(coef(cv_fit, s = "lambda.min"))
     selected_biomarkers <- biomarker_vars[coefs[-1, 1] != 0]  # exclude intercept
     
     # Always include age and selected biomarkers
