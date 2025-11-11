@@ -30,20 +30,25 @@
 #' @export
 #'
 #' @examples
-#' head(NHANES4)
-#' var <- c(
-#'   "age", "albumin", "alp", "creat",
-#'   "glucose_mmol", "lymph",
-#'   "mcv", "rdw", "wbc", "ggt"
-#' )
+#' # Load dataset
+#' data(NHANES4)
+#' 
+#' # Define variables
+#' var <- c("age", "albumin", "alp", "creat", "glucose_mmol", "lymph", "mcv", "rdw", "wbc", "ggt")
 #'
 #' # Without feature selection
-#' GOLD.bioage <- gold_bioage(NHANES4, var)
+#' result1 <- gold_bioage(NHANES4, var)
 #'
 #' # With LASSO feature selection
-#' GOLD.bioage_lasso <- gold_bioage(NHANES4, var, 
-#'                                 feature_selection = TRUE,
-#'                                 selection_method = "lasso")
+#' result2 <- gold_bioage(NHANES4, var, 
+#'                       feature_selection = TRUE,
+#'                       selection_method = "lasso")
+#'
+#' # With Elasticnet feature selection
+#' result3 <- gold_bioage(NHANES4, var, 
+#'                       feature_selection = TRUE,
+#'                       selection_method = "elasticnet",
+#'                       alpha = 0.5)
 
 gold_bioage <- function(d4, var, feature_selection = FALSE, 
                        selection_method = "lasso", alpha = 1, 
