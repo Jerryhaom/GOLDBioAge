@@ -13,7 +13,7 @@ data(NHANES4)
 head(NHANES4) <br>
 var <- c("age", "albumin", "alp", "creat","glucose_mmol","lymph","mcv", "rdw", "wbc", "ggt") <br>
 #calculate bioage based on Gompertz models (without feature selection) <br>
-bioage <- gold_bioage(NHANES4, var) <br><br>
+bioage <- gold_bioage(NHANES4, var) <br>
 
 #With LASSO feature selection <br>
 result2 <- gold_bioage(NHANES4, var, 
