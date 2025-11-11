@@ -121,7 +121,7 @@ gold_bioage <- function(d4, var, feature_selection = FALSE,
     # Create cross-validation plot
     cv_plot <- ggplot2::ggplot() +
       ggplot2::geom_point(ggplot2::aes(x = log(cv_fit$lambda), y = cv_fit$cvm)) +
-      ggplot2::geom_vline(ggplot2::aes(xintercept = log(cv_fit$lambda.1se)), 
+      ggplot2::geom_vline(ggplot2::aes(xintercept = log(cv_fit$lambda.min)), 
                          linetype = "dashed", color = "red") +
       ggplot2::labs(title = paste("Cross-Validation for", selection_method),
                    x = "Log(Lambda)", 
