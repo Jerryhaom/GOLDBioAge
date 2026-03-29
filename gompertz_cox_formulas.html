@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOLD BioAge: Methodological Derivation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', Times, serif;
+            line-height: 1.5;
+            margin: 2rem auto;
+            max-width: 1000px;
+            padding: 0 1rem;
+            color: #111;
+            background: #fff;
+        }
+        h1, h2, h3 {
+            font-weight: normal;
+            letter-spacing: -0.01em;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 0.3rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.2rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            margin: 1.2rem 0 0.5rem;
+            font-style: italic;
+        }
+        .formula {
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+        .block {
+            margin: 1.5rem 0;
+            padding-left: 1rem;
+            border-left: 2px solid #ddd;
+        }
+        p, li {
+            margin: 0.8rem 0;
+        }
+        .ref {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+        code {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+        }
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<h1>GOLD BioAge: Derivation of a Gompertz‑based biological age</h1>
+<p style="font-size:0.9rem; color:#444;">Based on the framework by Hao et al. (<em>Advanced Science</em>) – a proportional hazards approach to transform clinical biomarkers into a mortality‑calibrated age measure.</p>
+
+<h2>1. Gompertz model for mortality</h2>
+<p>The Gompertz distribution is widely used to model adult mortality. Its hazard function increases exponentially with age, capturing the accelerating risk of death. The two‑parameter Gompertz hazard is:</p>
+<div class="formula">
+\[
+h(t \mid a,b) = b e^{a t}
+\]
+</div>
+<p>where \(a\) (shape) describes the rate of risk acceleration and \(b\) (rate) scales the baseline hazard. The corresponding cumulative hazard and survival functions are:</p>
+<div class="formula">
+\[
+H(t) = \frac{b}{a}(e^{a t} - 1), \qquad S(t) = \exp\!\left(-\frac{b}{a}(e^{a t} - 1)\right).
+\]
+</div>
+
+<h2>2. Proportional hazards formulation with covariates</h2>
+<p>In a proportional hazards framework, covariates shift the hazard multiplicatively. For an individual with chronological age (CA) and a set of biomarkers, the Gompertz hazard becomes:</p>
+<div class="formula">
+\[
+h(t \mid \text{CA}, \mathbf{X}) = b \exp\!\left(\beta_{\text{age}}\cdot\text{CA} + \sum \beta_i X_i + a t\right).
+\]
+</div>
+<p>The parameter \(a\) is assumed constant across the population, meaning that age and biomarkers affect only the level of risk, not the rate of its increase with time.</p>
+
+<h2>3. Core derivation of GOLD BioAge</h2>
+<p>The GOLD BioAge is defined by matching the instantaneous hazard of an individual (with observed age and biomarkers) to the hazard of a reference individual whose only known attribute is a hypothetical “biological age”. Two nested Gompertz models are fitted:</p>
+<div class="block">
+<p><strong>Model 1</strong> (chronological age only):</p>
+<div class="formula">
+\[
+h_1(t, \text{age}) = b_1 \exp\!\left(a_1 t + \beta_1 \cdot \text{age}\right)
+\]
+</div>
+<p><strong>Model 2</strong> (age + biomarkers):</p>
+<div class="formula">
+\[
+h_2(t, \text{age}, \mathbf{X}) = b_2 \exp\!\left(a_2 t + \beta_2 \cdot \text{age} + \sum \beta_i X_i\right)
+\]
+</div>
+</div>
+<p>At \(t = 0\) (the time origin of the survival analysis), the hazard of an individual in Model 2 is set equal to the hazard of a person in Model 1 whose age equals the GOLD BioAge:</p>
+<div class="formula">
+\[
+h_1(t=0,\; \text{BioAge}) = h_2(t=0,\; \text{age}, \mathbf{X}).
+\]
+</div>
+<p>Substituting the expressions gives:</p>
+<div class="formula">
+\[
+b_1 e^{\beta_1 \cdot \text{BioAge}} = b_2 \exp\!\left(\beta_2 \cdot \text{age} + \sum \beta_i X_i\right).
+\]
+</div>
+<p>Solving for BioAge yields:</p>
+<div class="formula">
+\[
+\text{BioAge} = \frac{1}{\beta_1}\left(\beta_2 \cdot \text{age} + \sum \beta_i X_i + \ln\frac{b_2}{b_1}\right).
+\]
+</div>
+
+<h3>3.1 Bias correction via a scaling factor \(\gamma\)</h3>
+<p>In practice, the two models may have slight differences in baseline hazard even when the same covariates are used. To account for this, a correction factor \(\gamma\) is introduced such that \(h_1 = \gamma \cdot h_2\) at the reference level. The hazard equality then becomes:</p>
+<div class="formula">
+\[
+b_1 e^{\beta_1 \cdot \text{BioAge}} = \gamma \cdot b_2 \exp\!\left(\beta_2 \cdot \text{age} + \sum \beta_i X_i\right),
+\]
+</div>
+<p>leading to:</p>
+<div class="formula">
+\[
+\text{BioAge} = \frac{1}{\beta_1}\left(\beta_2 \cdot \text{age} + \sum \beta_i X_i + \ln\frac{\gamma b_2}{b_1}\right).
+\]
+</div>
+<p>To keep the interpretation simple, the coefficient for chronological age is often constrained to be equal across models (\(\beta_2 = \beta_1\)). The final formula becomes:</p>
+<div class="formula">
+\[
+\boxed{\text{GOLD BioAge} = \text{age} + \frac{1}{\beta_1}\sum \beta_i X_i + \frac{1}{\beta_1}\ln\frac{\gamma b_2}{b_1}}.
+\]
+</div>
+<p>The last term is a constant estimated from the data (e.g., from the mean ratio of empirical hazards). In the NHANES derivation this constant added approximately 4.7 years, preventing systematic underestimation of biological age.</p>
+
+<h2>4. Connection with Cox regression</h2>
+<p>The same risk‑equivalence principle can be applied using the semi‑parametric Cox model. For Cox models the hazard functions are:</p>
+<div class="formula">
+\[
+h_1(t\mid\text{age}) = h_0(t) e^{\beta_1 \cdot \text{age}}, \qquad
+h_2(t\mid\text{age},\mathbf{X}) = h_0'(t) e^{\beta_2 \cdot \text{age} + \sum \beta_i X_i}.
+\]
+</div>
+<p>Equating the hazard ratios (relative to the respective baselines) gives:</p>
+<div class="formula">
+\[
+e^{\beta_1 \cdot \text{BioAge}} \approx e^{\beta_2 \cdot \text{age} + \sum \beta_i X_i},
+\]
+</div>
+<p>which leads to a similar linear expression. After including a correction \(\gamma\) (now on the hazard ratio scale) and setting \(\beta_2 = \beta_1\), we obtain:</p>
+<div class="formula">
+\[
+\text{BioAge}_{\text{Cox}} = \text{age} + \frac{1}{\beta_1}\sum \beta_i X_i + \frac{1}{\beta_1}\ln\frac{HR_1}{HR_2}.
+\]
+</div>
+<p>Empirical comparisons in the NHANES dataset showed that coefficients derived from Gompertz and Cox models were nearly identical, and both achieved a concordance index of 0.869 for mortality prediction. Thus the parametric Gompertz assumption does not compromise performance while providing a closed‑form biological age formula.</p>
+
+<h2>5. Feature selection with LASSO‑Cox</h2>
+<p>To obtain a sparse and generalizable set of biomarkers, LASSO‑Cox regression was applied with five‑fold cross‑validation. The penalty parameter \(\lambda\) was chosen as \(\lambda_{\text{1se}}\) – the largest value within one standard error of the minimum cross‑validated partial likelihood. This balances model complexity and predictive accuracy. Stability was assessed through 100 bootstrap resamples and data perturbation; the selected biomarkers consistently appeared across replicates, confirming robustness.</p>
+<p>Using this approach in the NHANES training set, ten biomarkers (plus chronological age) were retained: creatinine, glucose, mean corpuscular volume (MCV), red cell distribution width (RDW), albumin, alkaline phosphatase (ALP), lymphocyte percent, white blood cell count, and gamma‑glutamyl transferase (GGT). The resulting GOLD BioAge is a linear combination of these markers, directly interpretable as an age‑equivalent mortality risk.</p>
+
+<h2>6. Derivation of Levine’s Phenotypic Age</h2>
+<p>Levine’s Phenotypic Age <sup>[1]</sup> is also grounded in the Gompertz model but uses the <em>cumulative distribution function</em> to match 10‑year mortality risk. Two Gompertz proportional hazards models are constructed:</p>
+<div class="block">
+<p><strong>Model A</strong> (only chronological age):</p>
+<div class="formula">
+\[
+F_1(t=120, \text{PhenoAge}) = 1 - \exp\!\left(-\exp(\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right)
+\]
+</div>
+<p><strong>Model B</strong> (age + biomarkers):</p>
+<div class="formula">
+\[
+F_2(t=120, \text{age}, \mathbf{X}) = 1 - \exp\!\left(-\exp(\mathbf{X}\hat{\boldsymbol{\beta}}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right)
+\]
+</div>
+<p>where \(\mathbf{X}\hat{\boldsymbol{\beta}} = \hat{\beta}_0 + \hat{\beta}_{\text{age}}\cdot\text{age} + \sum \hat{\beta}_i X_i\). The time horizon \(t=120\) months corresponds to 10 years.</p>
+</div>
+<p>The underlying idea is to find the hypothetical age (PhenoAge) such that the 10‑year mortality risk predicted by Model A (using only that age) equals the risk predicted by Model B (using actual age and biomarkers). Thus we set:</p>
+<div class="formula">
+\[
+F_1(t=120, \text{PhenoAge}) = F_2(t=120, \text{age}, \mathbf{X}).
+\]
+</div>
+<p>Substituting the cumulative distribution expressions gives:</p>
+<div class="formula">
+\[
+1 - \exp\!\left(-\exp(\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right) =
+1 - \exp\!\left(-\exp(\mathbf{X}\hat{\boldsymbol{\beta}}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right).
+\]
+</div>
+<p>Cancelling the outer \(1-\exp(\cdot)\) and equating the inner arguments yields:</p>
+<div class="formula">
+\[
+\exp(\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge}) = \exp(\mathbf{X}\hat{\boldsymbol{\beta}}).
+\]
+</div>
+<p>Taking logarithms and solving for PhenoAge:</p>
+<div class="formula">
+\[
+\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge} = \mathbf{X}\hat{\boldsymbol{\beta}} \quad\Rightarrow\quad
+\text{PhenoAge} = \frac{\mathbf{X}\hat{\boldsymbol{\beta}} - \hat{\beta}_0}{\hat{\beta}_1}.
+\]
+</div>
+<p>In practice, the parameters are estimated from the data. Using the NHANES‑derived coefficients, the final formula is expressed as:</p>
+<div class="formula">
+\[
+\text{Phenotypic Age} = 141.50225 + \frac{\ln\!\bigl(-0.00553 \cdot \ln(1 - F_2(120,X))\bigr)}{0.090165},
+\]
+</div>
+<p>where \(F_2(120,X)\) is the predicted 10‑year mortality risk from Model B, and the constants stem from the fitted Gompertz shape and the linear predictor coefficients. This formulation is algebraically equivalent to the linear expression above but is presented in a form that directly incorporates the estimated Gompertz parameters.</p>
+<p>While both GOLD BioAge and Levine’s Phenotypic Age rely on the Gompertz law, they differ in the aspect of risk used: GOLD BioAge uses the <em>instantaneous hazard</em> at baseline (\(t=0\)), leading to a simple linear combination of biomarkers; Phenotypic Age uses the 10‑year <em>cumulative risk</em>, which requires solving for the quantile of the cumulative distribution. Both measures are highly correlated and predict mortality similarly, but GOLD BioAge offers greater computational simplicity and direct interpretability as an age‑equivalent mortality rate.</p>
+
+<div class="ref">
+    <strong>Reference</strong><br>
+    The methodological framework, derivation, empirical validation, and comparison with Phenotypic Age are detailed in:<br>
+    Hao M. et al. “Gompertz Law‑Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Ageing to Capture Morbidity and Mortality Risks.” <em>Advanced Science</em>, 2026.<br>
+    <span style="font-size:0.85rem;">The supplementary materials contain the full mathematical derivations, stability analyses, and cohort‑specific coefficients.</span>
+</div>
+
+</body>
+</html>
