@@ -1,6 +1,9 @@
 # GOLD BioAge <br>
 This package provides measurements of biological aging clocks based on Gompertz or Cox regression. <br>
-The example data was downloaded from the National Health and Nutrition Examination Survey (NHANES). 
+The example data was downloaded from the National Health and Nutrition Examination Survey (NHANES). <br>
+
+Supplementary mathematical materials for GOLD BioAge can be accessed at:
+https://jerryhaom.github.io/GOLDBioAge/gompertz_cox_formulas.html <br><br> 
 
 # INSTALL <br>
 install.packages("devtools") <br>
