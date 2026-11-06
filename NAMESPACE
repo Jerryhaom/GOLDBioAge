@@ -2,4 +2,5 @@
 
 export(cox_bioage)
 export(gold_bioage)
+export(predict_cox_bioage)
 export(predict_gold_bioage)

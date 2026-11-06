@@ -47,7 +47,22 @@ person_score <- predict_gold_bioage(published_nhanes, person)
 print(person_score) # 51.10203967 years (51.1 at one decimal place)
 stopifnot(abs(person_score - 51.10203967) < 1e-8)
 
+# 5. Fit Cox on the same variables and complete cases, then compare weights/scores.
+nhanes_cox_fit <- cox_bioage(NHANES4, variables)
+stopifnot(identical(nhanes_cox_fit$rows_used, nhanes_fit$rows_used))
+nhanes_scored$Coxbioage <- predict_cox_bioage(nhanes_cox_fit, nhanes_scored)
+cox_weights <- nhanes_cox_fit$score_coefficients
+print(round(cbind(Gompertz = nhanes_fit$coefficients[names(cox_weights)],
+                  Cox = cox_weights), 8))
+print(c(mean_age = mean(nhanes_cox_fit$CoxBioage$age),
+        mean_Cox_age = mean(nhanes_cox_fit$CoxBioage$Coxbioage),
+        score_correlation = cor(nhanes_scored$GOLDbioage_refit,
+                                nhanes_scored$Coxbioage, use = "complete.obs")))
+stopifnot(isTRUE(all.equal(nhanes_scored$Coxbioage[nhanes_cox_fit$rows_used],
+                           nhanes_cox_fit$CoxBioage$Coxbioage, tolerance = 1e-8)))
+
 # Optional local export (uncomment to write files in your current directory):
 # write.csv(nhanes_scored, "NHANES_GOLDBioAge.csv", row.names = FALSE)
 # saveRDS(nhanes_fit$coefficients, "NHANES_refitted_coefficients.rds")
+# saveRDS(nhanes_cox_fit$score_coefficients, "NHANES_Cox_coefficients.rds")
 # Scoring the development dataset is not independent validation.

@@ -83,7 +83,7 @@ A verified full-data fit gives the following coefficients (displayed to eight de
 
 Small last-digit differences can occur across optimizer and dependency versions. The age coefficient is constrained to 1 after conversion to years. Missing rows are removed only for required model columns. The package does not impute missingness, fit survey weights, or incorporate strata and clusters; this example is an unweighted complete-case fit.
 
-The displayed reference was verified with R 4.5.3, GOLDBioAge 0.2.0, flexsurv 2.3.2, and survival 3.8-6. The no-selection refit agrees with the previous implementation to numerical precision.
+The displayed reference was verified with R 4.5.3, GOLDBioAge 0.2.1, flexsurv 2.3.2, and survival 3.8-6. The no-selection refit agrees with the previous implementation to numerical precision.
 
 ## 4. Preserve alignment with the original data
 
@@ -130,12 +130,30 @@ stopifnot(abs(person_score - 51.10203967) < 1e-8)
 
 The result is **51.10203967 years**, displayed as **51.1 years** by the web calculator. All units are those listed above. No follow-up or event status is needed to apply this fixed score. Rename external columns and convert their units before prediction; the function does neither automatically.
 
-## 6. Interpret and export
+## 6. Fit Cox on the same complete cases
+
+```r
+cox_fit <- cox_bioage(NHANES4, variables)
+stopifnot(identical(cox_fit$rows_used, fit$rows_used))
+scored$Coxbioage <- predict_cox_bioage(cox_fit, scored)
+cox_weights <- cox_fit$score_coefficients
+round(cbind(Gompertz = fit$coefficients[names(cox_weights)], Cox = cox_weights), 8)
+c(mean_age = mean(cox_fit$CoxBioage$age),
+  mean_Cox_age = mean(cox_fit$CoxBioage$Coxbioage),
+  score_correlation = cor(scored$GOLDbioage_refit, scored$Coxbioage, use = "complete.obs"))
+```
+
+Both fits use 39,348 complete observations with 4,716 deaths. The default calibrated Cox intercept is approximately **-53.56354467**; mean Cox BioAge and mean chronological age are both approximately **49.49797 years**. The fitted Cox weights are similar to the Gompertz weights, but their score correlation is a descriptive comparison on development data.
+
+Version 0.2.1 changes the default Cox intercept calibration, without changing the fitted weights. `cox_bioage(NHANES4, variables, calibration = "legacy")` reproduces the old convention (training mean score approximately 53.56354 years here). See the [Cox tutorial](cox-bioage.md) for formulas, frozen scoring, and migration details.
+
+## 7. Interpret and export
 
 ```r
 # Optional local exports:
 # write.csv(scored, "NHANES_GOLDBioAge.csv", row.names = FALSE)
 # saveRDS(fit$coefficients, "NHANES_refitted_coefficients.rds")
+# saveRDS(cox_fit$score_coefficients, "NHANES_Cox_coefficients.rds")
 sessionInfo()
 ```
 

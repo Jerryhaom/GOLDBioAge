@@ -1,8 +1,8 @@
 # GOLDBioAge
 
-An R package for fitting **Gompertz law-based biological age (GOLD BioAge)** and a Cox-based biological age alternative, and for applying frozen GOLD BioAge coefficients to new biomarker data.
+An R package for fitting **Gompertz law-based biological age (GOLD BioAge)** and a Cox-based biological age alternative, and for applying frozen GOLD or Cox BioAge coefficients to new biomarker data.
 
-[中文使用说明](README.zh-CN.md) · [Simulated Gompertz tutorial](docs/simulated-gompertz.md) · [NHANES tutorial](docs/nhanes.md) · [Published coefficients](Coefficients.md)
+[中文使用说明](README.zh-CN.md) · [Simulated Gompertz tutorial](docs/simulated-gompertz.md) · [NHANES tutorial](docs/nhanes.md) · [Cox fitting tutorial](docs/cox-bioage.md) · [Published coefficients](Coefficients.md)
 
 ## Choose your workflow
 
@@ -12,6 +12,7 @@ An R package for fitting **Gompertz law-based biological age (GOLD BioAge)** and
 | Score new participants with a fitted model | Baseline age and the selected biomarkers, in the training units | `predict_gold_bioage(fit, newdata)` |
 | Apply the published NHANES/UKB model | A named published coefficient vector, age, and the corresponding biomarkers | `predict_gold_bioage(coefficients, newdata)` |
 | Fit the Cox-based alternative | Baseline age, biomarkers, survival follow-up, event status | `cox_bioage()` |
+| Score new participants with a Cox model | Baseline age and the fitted biomarkers | `predict_cox_bioage(fit, newdata)` |
 
 `gold_bioage()` **refits** the model. It does not automatically use the published NHANES or UKB coefficients. Scoring with frozen coefficients does not require `time` or `status` and does not recenter scores on the new sample.
 
@@ -29,7 +30,7 @@ Basic fitting uses `flexsurv` and `survival`, installed as package dependencies.
 install.packages(c("glmnet", "ggplot2"))
 ```
 
-Version 0.2.0 adds frozen-coefficient prediction, input checks, and runnable tutorials. See [NEWS.md](NEWS.md) for corrections that can affect older feature-selection results.
+Version 0.2.1 adds Cox fitting and frozen scoring tutorials, with explicit training calibration. See [NEWS.md](NEWS.md) for the Cox calibration change and earlier feature-selection corrections.
 
 ## Quick start: NHANES
 
@@ -53,6 +54,29 @@ NHANES4$age_difference <- NHANES4$GOLDbioage - NHANES4$age
 ```
 
 The bundled data have **54,945 rows and 30 columns**. With the ten predictors above, the complete-case fit uses **39,348 observations and 4,716 deaths**, omitting 15,597 rows. It uses an unweighted analysis of the supplied processed data. See the [NHANES tutorial](docs/nhanes.md) for the data dictionary, missingness checks, fitted coefficients, and a worked example applying the published formula without refitting.
+
+## Fit with Cox regression
+
+```r
+library(GOLDBioAge)
+data("NHANES4", package = "GOLDBioAge")
+cox_variables <- c("age", "albumin", "alp", "creat", "glucose_mmol",
+                   "lymph", "mcv", "rdw", "wbc", "ggt")
+fit_cox <- cox_bioage(NHANES4, cox_variables)
+fit_cox$coefficients       # Legacy matrix of weights in years.
+fit_cox$intercept          # Training intercept; must be retained.
+fit_cox$score_coefficients # Named weights plus beta0, ready to save.
+
+NHANES4$Coxbioage <- predict_cox_bioage(fit_cox, NHANES4)
+head(fit_cox$CoxBioage[, c("age", "Coxbioage")])
+
+```
+
+Cox fitting estimates the age effect in an age-only model, fixes it as an offset in the biomarker model, and converts biomarker coefficients to years. Its baseline hazard is unspecified. By default, the intercept centers the training mean Cox BioAge on training mean age; frozen prediction keeps that intercept unchanged. The score does not directly estimate an absolute mortality probability.
+
+**Cox calibration changed in 0.2.1:** the default corrects inconsistent centering of predicted linear predictors and the age offset. Biomarker coefficients are unchanged, but score levels can change. Use `cox_bioage(..., calibration = "legacy")` to reproduce the intercept and scores from 0.2.0 or earlier. `predict_cox_bioage()` also accepts saved 0.2.0 fitted objects and retains their stored intercept.
+
+See the [Cox tutorial](docs/cox-bioage.md) for the derivation, both data examples and a coefficient comparison. The simulated and NHANES scripts now fit both approaches on the same training rows. Their agreement is descriptive and does not demonstrate equivalent out-of-sample performance. The final `cox_bioage()` model is separate from the Cox screening step inside `gold_bioage(feature_selection = TRUE)`.
 
 ## Example: simulate Gompertz survival data
 
@@ -137,7 +161,7 @@ source("examples/01_simulated_gompertz.R")
 source("examples/02_nhanes.R")
 ```
 
-The scripts leave their fitted models and scored data in the R session. Local export commands are included but commented out. The `docs/` and `examples/` folders are available on GitHub; installed function help is available with `?gold_bioage` and `?predict_gold_bioage`.
+The scripts leave their fitted models and scored data in the R session. Local export commands are included but commented out. The `docs/` and `examples/` folders are available on GitHub; installed function help is available with `?gold_bioage`, `?predict_gold_bioage`, `?cox_bioage`, and `?predict_cox_bioage`.
 
 ## Development checks
 

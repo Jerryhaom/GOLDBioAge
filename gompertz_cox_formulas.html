@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOLD BioAge: Methodological Derivation</title>
+    <title>GOLD and Cox BioAge: Derivation and R Examples</title>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
     <style>
         body {
@@ -61,6 +61,17 @@
             padding: 0.1rem 0.3rem;
             border-radius: 3px;
         }
+        pre {
+            overflow-x: auto;
+            padding: 1rem;
+            background: #f6f8fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            line-height: 1.6;
+        }
+        pre code { background: none; padding: 0; }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+        th, td { border-bottom: 1px solid #ddd; padding: 0.6rem; text-align: left; }
         ul, ol {
             margin: 0.5rem 0 1rem 1.5rem;
         }
@@ -68,7 +79,8 @@
 </head>
 <body>
 
-<h1>GOLD BioAge: Derivation of a Gompertz‑based biological age</h1>
+<h1>GOLD and Cox BioAge: Derivation and R Examples</h1>
+<nav aria-label="Tutorial sections"><a href="#cox">Cox derivation</a> · <a href="#r-examples">R fitting example</a> · <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/docs/cox-bioage.md">Full Cox tutorial</a></nav>
 <p style="font-size:0.9rem; color:#444;">Based on the framework by Hao et al. (<em>Advanced Science</em>) – a proportional hazards approach to transform clinical biomarkers into a mortality‑calibrated age measure.</p>
 
 <h2>1. Gompertz model for mortality</h2>
@@ -148,33 +160,52 @@ b_1 e^{\beta_1 \cdot \text{BioAge}} = \gamma \cdot b_2 \exp\!\left(\beta_2 \cdot
 \boxed{\text{GOLD BioAge} = \text{age} + \frac{1}{\beta_1}\sum \beta_i X_i + \frac{1}{\beta_1}\ln\frac{\gamma b_2}{b_1}}.
 \]
 </div>
-<p>The last term is a constant estimated from the data (e.g., from the mean ratio of empirical hazards). In the NHANES derivation this constant added approximately 4.7 years, preventing systematic underestimation of biological age.</p>
+<p>The package defines a single training-sample correction using
+\(\ln\gamma=\operatorname{mean}_{\mathrm{train}}[\ln\{h_1(0\mid A)/h_2(0\mid A,X)\}]\).
+Together with the fixed age effect, this makes the intercept equal to
+\(b_0=\operatorname{mean}_{\mathrm{train}}(A-s)\), where
+\(s=A+\sum_i\beta_iX_i/\beta_1\). Mean training GOLD BioAge therefore equals mean training chronological age by construction. In the bundled NHANES fit, the GOLD intercept is approximately -53.62873289 years; it is not a universal +4.7-year correction. Keep the fitted intercept fixed when scoring new data.</p>
 
-<h2>4. Connection with Cox regression</h2>
-<p>The same risk‑equivalence principle can be applied using the semi‑parametric Cox model. For Cox models the hazard functions are:</p>
+<h2 id="cox">4. Cox-derived biological age</h2>
+<p>The same conversion of biomarker effects to age units can be used with Cox proportional-hazards regression. First fit an age-only reference model, then fix its age effect through an offset in a model containing the biomarkers:</p>
 <div class="formula">
 \[
-h_1(t\mid\text{age}) = h_0(t) e^{\beta_1 \cdot \text{age}}, \qquad
-h_2(t\mid\text{age},\mathbf{X}) = h_0'(t) e^{\beta_2 \cdot \text{age} + \sum \beta_i X_i}.
+h_1(t\mid A)=h_{01}(t)e^{\beta_A A},\qquad
+h_2(t\mid A,X)=h_{02}(t)\exp\left(\beta_A A+\sum_j\theta_jX_j\right).
 \]
 </div>
-<p>Equating the hazard ratios (relative to the respective baselines) gives:</p>
+<p>The Cox baseline hazards are unspecified and need not be equal. Define the uncalibrated age score and one intercept on the complete-case training sample:</p>
 <div class="formula">
 \[
-e^{\beta_1 \cdot \text{BioAge}} \approx e^{\beta_2 \cdot \text{age} + \sum \beta_i X_i},
+s_i=A_i+\sum_j\frac{\theta_j}{\beta_A}X_{ij},\qquad
+b_0=\frac{1}{n_{\mathrm{train}}}\sum_{i\in\mathrm{train}}(A_i-s_i).
 \]
-</div>
-<p>which leads to a similar linear expression. After including a correction \(\gamma\) (now on the hazard ratio scale) and setting \(\beta_2 = \beta_1\), we obtain:</p>
-<div class="formula">
 \[
-\text{BioAge}_{\text{Cox}} = \text{age} + \frac{1}{\beta_1}\sum \beta_i X_i + \frac{1}{\beta_1}\ln\frac{HR_1}{HR_2}.
+\boxed{\mathrm{CoxBioAge}_i=s_i+b_0.}
 \]
 </div>
-<p>Empirical comparisons in the NHANES dataset showed that coefficients derived from Gompertz and Cox models were nearly identical, and both achieved a concordance index of 0.869 for mortality prediction. Thus the parametric Gompertz assumption does not compromise performance while providing a closed‑form biological age formula.</p>
+<p>Equivalently, \(b_0=\operatorname{mean}_{\mathrm{train}}(\ell_1^0-\ell_2^0)/\beta_A\), where
+\(\ell_1^0=\beta_A A\) and \(\ell_2^0=\beta_A A+\sum_j\theta_jX_j\) are <em>uncentered</em> linear predictors. The reference age coefficient must be nonzero. The age effect becomes 1 after conversion to years, and mean training Cox BioAge equals mean training age. A different population need not have a zero mean score difference; retain the training intercept during transfer.</p>
+<p>This is a calibrated relative-risk-derived age score. Absolute hazard equivalence at a chosen follow-up time would additionally involve \(h_{02}(t)/h_{01}(t)\), so it cannot in general be inferred by cancelling the two Cox baseline hazards. This function does not directly estimate an absolute mortality probability.</p>
+<h3>4.1 Implementation and calibration convention</h3>
+<p><code>cox_bioage()</code> fits both Cox models with Efron handling of tied event times. The full model fixes age through an offset; the estimated biomarker effects are divided by the age-only coefficient. The original weight matrix remains in <code>fit$coefficients</code>; the complete portable vector, including <code>beta0</code>, is in <code>fit$score_coefficients</code>. Use <code>predict_cox_bioage()</code> for new observations.</p>
+<p><strong>Version 0.2.1 calibration change:</strong> default <code>predict.coxph(type = "lp")</code> values are centered, and offsets follow a different convention from ordinary covariates. Older package code combined those predictions with raw age and biomarker weights. The default now calculates <code>mean(age - linear_score)</code> directly. Fitted weights are unchanged, but score levels can change. Use <code>calibration = "legacy"</code> to reproduce the intercept and scores from version 0.2.0 or earlier; saved older objects keep their stored intercept when passed to <code>predict_cox_bioage()</code>.</p>
+<p>On the bundled NHANES complete-case sample (39,348 participants, 4,716 deaths), the default Cox intercept is approximately -53.56354467. Mean calibrated Cox BioAge and mean age are both approximately 49.49797 years. The legacy intercept is approximately -49.49796686 and gives a mean score of 53.56354 years. These are computed examples, not evidence of independent clinical validation.</p>
+<table>
+<thead><tr><th>Property</th><th>Gompertz GOLD</th><th>Cox alternative</th></tr></thead>
+<tbody>
+<tr><td>Follow-up baseline hazard</td><td>Parametric Gompertz form</td><td>Unspecified</td></tr>
+<tr><td>Reference age effect</td><td>Estimated in age-only Gompertz model</td><td>Estimated in age-only Cox model</td></tr>
+<tr><td>Final age effect</td><td>Fixed to reference estimate</td><td>Fixed through an offset</td></tr>
+<tr><td>Default intercept</td><td>Training mean of age minus linear score</td><td>Training mean of age minus linear score</td></tr>
+<tr><td>Frozen scoring</td><td><code>predict_gold_bioage()</code></td><td><code>predict_cox_bioage()</code></td></tr>
+</tbody>
+</table>
+<p>Compare the two methods on identical participants, predictors, units, and missing-value rules. Similar weights or correlated scores describe agreement; they do not prove equal predictive accuracy or establish external validity.</p>
 
-<h2>5. Feature selection with LASSO‑Cox</h2>
-<p>To obtain a sparse and generalizable set of biomarkers, LASSO‑Cox regression was applied with five‑fold cross‑validation. The penalty parameter \(\lambda\) was chosen as \(\lambda_{\text{1se}}\) – the largest value within one standard error of the minimum cross‑validated partial likelihood. This balances model complexity and predictive accuracy. Stability was assessed through 100 bootstrap resamples and data perturbation; the selected biomarkers consistently appeared across replicates, confirming robustness.</p>
-<p>Using this approach in the NHANES training set, ten biomarkers (plus chronological age) were retained: creatinine, glucose, mean corpuscular volume (MCV), red cell distribution width (RDW), albumin, alkaline phosphatase (ALP), lymphocyte percent, white blood cell count, and gamma‑glutamyl transferase (GGT). The resulting GOLD BioAge is a linear combination of these markers, directly interpretable as an age‑equivalent mortality risk.</p>
+<h2>5. Cox screening versus a final Cox model</h2>
+<p>In the current R package, <code>gold_bioage(feature_selection = TRUE)</code> uses a biomarker-only penalized Cox model to select predictors, then fits a final <em>Gompertz</em> model with age retained. The implemented selector uses <code>lambda.min</code>, with LASSO or elastic net and a configurable fold count and seed. It does not automatically perform bootstrap stability assessment. This screening step is different from calling <code>cox_bioage()</code> to fit the final Cox-derived score.</p>
+<p>Perform feature selection and preprocessing inside the development sample. The full GOLD example uses nine biomarkers plus age: creatinine, glucose, MCV, RDW, albumin, ALP, lymphocyte percentage, WBC, and GGT. See the original article for its research analyses and the package tutorials for the currently executable workflow.</p>
 
 <h2>6. Derivation of Levine’s Phenotypic Age</h2>
 <p>Levine’s Phenotypic Age <sup>[1]</sup> is also grounded in the Gompertz model but uses the <em>cumulative distribution function</em> to match 10‑year mortality risk. Two Gompertz proportional hazards models are constructed:</p>
@@ -228,10 +259,35 @@ F_1(t=120, \text{PhenoAge}) = F_2(t=120, \text{age}, \mathbf{X}).
 <p>where \(F_2(120,X)\) is the predicted 10‑year mortality risk from Model B, and the constants stem from the fitted Gompertz shape and the linear predictor coefficients. This formulation is algebraically equivalent to the linear expression above but is presented in a form that directly incorporates the estimated Gompertz parameters.</p>
 <p>While both GOLD BioAge and Levine’s Phenotypic Age rely on the Gompertz law, they differ in the aspect of risk used: GOLD BioAge uses the <em>instantaneous hazard</em> at baseline (\(t=0\)), leading to a simple linear combination of biomarkers; Phenotypic Age uses the 10‑year <em>cumulative risk</em>, which requires solving for the quantile of the cumulative distribution. Both measures are highly correlated and predict mortality similarly, but GOLD BioAge offers greater computational simplicity and direct interpretability as an age‑equivalent mortality rate.</p>
 
+<h2 id="r-examples">7. Run Gompertz and Cox fitting in R</h2>
+<p>Install GOLDBioAge 0.2.1 or later using <code>remotes::install_github("Jerryhaom/GOLDBioAge")</code>, then run:</p>
+<pre><code class="language-r">library(GOLDBioAge)
+data(&quot;NHANES4&quot;, package = &quot;GOLDBioAge&quot;)
+variables &lt;- c(&quot;age&quot;, &quot;albumin&quot;, &quot;alp&quot;, &quot;creat&quot;, &quot;glucose_mmol&quot;,
+               &quot;lymph&quot;, &quot;mcv&quot;, &quot;rdw&quot;, &quot;wbc&quot;, &quot;ggt&quot;)
+
+fit_cox &lt;- cox_bioage(NHANES4, variables)
+fit_gold &lt;- gold_bioage(NHANES4, variables)
+stopifnot(identical(fit_cox$rows_used, fit_gold$rows_used))
+
+# Predict from biomarkers only; keep the training intercept.
+NHANES4$Coxbioage &lt;- predict_cox_bioage(fit_cox, NHANES4[, variables])
+fit_cox$score_coefficients
+mean(fit_cox$CoxBioage$Coxbioage - fit_cox$CoxBioage$age)
+
+# Compare weights on the same complete cases.
+w &lt;- fit_cox$score_coefficients
+round(cbind(Gompertz = fit_gold$coefficients[names(w)], Cox = w), 8)
+
+
+# Reproduce the older intercept convention when needed.
+legacy_fit &lt;- cox_bioage(NHANES4, variables, calibration = &quot;legacy&quot;)</code></pre>
+<p>For a simulated Gompertz cohort with training/test splitting, run <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/examples/01_simulated_gompertz.R">the simulated-data script</a>. For the bundled NHANES cohort, run <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/examples/02_nhanes.R">the NHANES script</a>. Both include Cox fitting, fixed-coefficient scoring, and comparison with Gompertz GOLD. Read the <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/docs/cox-bioage.md">full Cox tutorial</a> or the <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/README.zh-CN.md">Chinese guide</a>.</p>
+
 <div class="ref">
     <strong>Reference</strong><br>
     The methodological framework, derivation, empirical validation, and comparison with Phenotypic Age are detailed in:<br>
-    Hao M. et al. “Gompertz Law‑Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Ageing to Capture Morbidity and Mortality Risks.” <em>Advanced Science</em>, 2026.<br>
+    Hao M. et al. “Gompertz Law‑Based Biological Age (GOLD BioAge): A Simple and Practical Measurement of Biological Ageing to Capture Morbidity and Mortality Risks.” <em>Advanced Science</em>, 2025, e01765. <a href="https://doi.org/10.1002/advs.202501765">doi:10.1002/advs.202501765</a>.<br>
     <span style="font-size:0.85rem;">The supplementary materials contain the full mathematical derivations, stability analyses, and cohort‑specific coefficients.</span>
 </div>
 

@@ -50,4 +50,18 @@ if (requireNamespace("glmnet", quietly = TRUE) && requireNamespace("ggplot2", qu
   test$GOLDbioage_lasso <- predict_gold_bioage(sim_lasso, test)
 }
 
+# 6. Fit the Cox alternative on exactly the same development participants.
+sim_cox_fit <- cox_bioage(train, variables)
+print(sim_cox_fit$coefficients)
+print(sim_cox_fit$intercept)
+test$Coxbioage <- predict_cox_bioage(sim_cox_fit, test[, variables, drop = FALSE])
+test$Cox_age_difference <- test$Coxbioage - test$age
+print(c(mean_train_Cox_age_difference = mean(sim_cox_fit$CoxBioage$Coxbioage - train$age),
+        mean_test_Cox_age_difference = mean(test$Cox_age_difference),
+        heldout_score_correlation = cor(test$GOLDbioage, test$Coxbioage)))
+stopifnot(all(is.finite(test$Coxbioage)),
+          abs(mean(sim_cox_fit$CoxBioage$Coxbioage - train$age)) < 1e-8,
+          isTRUE(all.equal(predict_cox_bioage(sim_cox_fit$score_coefficients, test),
+                            test$Coxbioage, tolerance = 1e-8)))
+
 # These are artificial data and an algorithm demonstration, not clinical validation.

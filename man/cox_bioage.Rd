@@ -4,22 +4,40 @@
 \alias{cox_bioage}
 \title{Fit a Cox regression biological age model}
 \usage{
-cox_bioage(d4, var)
+cox_bioage(d4, var, calibration = c("centered", "legacy"))
 }
 \arguments{
 \item{d4}{Data frame containing numeric model columns, non-negative \code{time},
 and \code{status} coded 0 (censored) or 1 (event).}
 
 \item{var}{Unique predictor column names including \code{age}, in any order.}
+
+\item{calibration}{Intercept convention: \code{"centered"} (default) estimates
+\code{mean(age - linear_score)} on complete training rows. \code{"legacy"} reproduces
+the centered-prediction intercept used through version 0.2.0, whose scores
+do not generally have the same training mean as chronological age.}
 }
 \value{
 A list with \code{"model1 coef"}, \code{"model2 coef"}, \code{coefficients} (the
 original coefficient matrix), \code{intercept}, \code{CoxBioage} (complete-case data
-with numeric \code{Coxbioage}), \code{rows_used}, and \code{rows_omitted}.
+with numeric \code{Coxbioage}), \code{rows_used}, and \code{rows_omitted}. Additional fields
+are \code{score_coefficients} (named weights including \code{beta0}), \code{calibration},
+and \code{models} (age-only and constrained full Cox models).
 }
 \description{
 Fits an age-only Cox model and a biomarker model with the age coefficient
 fixed by an offset. This is a Cox-based alternative to GOLD BioAge.
+The default intercept centers the training mean score on chronological age.
+}
+\details{
+The final Cox model uses Efron handling of tied events and fixes the age
+coefficient to the age-only estimate using an offset. Biomarker coefficients
+are divided by that reference age coefficient. The default intercept is
+estimated once on training data and is retained for new observations.
+This is a relative-risk-derived age score, not an absolute mortality
+probability or proof that two fitted Cox baseline hazards are equal.
+Use \code{\link[=predict_cox_bioage]{predict_cox_bioage()}} for frozen scoring. The two fitted Cox models
+are also returned for inspecting their coefficients and fitted model objects.
 }
 \examples{
 \donttest{
@@ -27,5 +45,7 @@ data(NHANES4)
 variables <- c("age", "albumin", "creat", "glucose_mmol")
 fit <- cox_bioage(NHANES4, variables)
 fit$coefficients
+fit$intercept
+scores <- predict_cox_bioage(fit, NHANES4)
 }
 }

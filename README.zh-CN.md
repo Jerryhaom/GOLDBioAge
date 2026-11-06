@@ -1,6 +1,6 @@
 # GOLDBioAge 中文使用说明
 
-[English README](README.md) · [模拟 Gompertz 完整教程](docs/simulated-gompertz.md) · [NHANES 完整教程](docs/nhanes.md) · [已发表系数](Coefficients.md)
+[English README](README.md) · [模拟 Gompertz 完整教程](docs/simulated-gompertz.md) · [NHANES 完整教程](docs/nhanes.md) · [Cox 专题教程](docs/cox-bioage.md) · [已发表系数](Coefficients.md)
 
 GOLDBioAge 可以用生存随访数据训练 GOLD BioAge 模型，也可以将已经固定的系数用于新的生物标志物数据。
 
@@ -11,6 +11,8 @@ GOLDBioAge 可以用生存随访数据训练 GOLD BioAge 模型，也可以将�
 | 在自己的队列重新训练模型 | 年龄、生物标志物、随访时间、事件状态 | `gold_bioage()` |
 | 用训练好的模型计算新人群 | 年龄和入选生物标志物 | `predict_gold_bioage(fit, newdata)` |
 | 直接使用已发表的 NHANES/UKB 系数 | 对应系数向量、年龄和相同单位的指标 | `predict_gold_bioage(coefficients, newdata)` |
+| 使用 Cox 回归拟合年龄分数 | 年龄、生物标志物、随访时间、事件状态 | `cox_bioage()` |
+| 将固定 Cox 模型应用到新数据 | 年龄和拟合时的指标 | `predict_cox_bioage(fit, newdata)` |
 
 调用 `gold_bioage()` 会重新估计模型，不会自动使用已发表系数。调用 `predict_gold_bioage()` 使用固定系数，不需要随访结局，也不会在新样本中重新校准截距。
 
@@ -86,7 +88,31 @@ length(fit_nhanes$rows_omitted)
 
 包内数据有 **54,945 行、30 列**。按上述指标进行完整病例拟合，使用 **39,348 人、4,716 例死亡**，因模型变量缺失排除 15,597 行。拟合不会自动插补，也没有加入 NHANES 调查权重、分层或聚类设计。这是分发文件的分析示例，不是从 NHANES 原始下载开始的完整复现流程。
 
-## 案例三：直接使用 NHANES 已发表系数
+## 案例三：使用 Cox 回归拟合
+
+```r
+library(GOLDBioAge)
+data("NHANES4", package = "GOLDBioAge")
+cox_variables <- c("age", "albumin", "alp", "creat", "glucose_mmol",
+                   "lymph", "mcv", "rdw", "wbc", "ggt")
+fit_cox <- cox_bioage(NHANES4, cox_variables)
+fit_cox$coefficients       # 保留原有系数矩阵格式，单位为年。
+fit_cox$intercept          # 训练集截距，预测时不能省略。
+fit_cox$score_coefficients # 包含 beta0 的完整命名系数向量。
+
+NHANES4$Coxbioage <- predict_cox_bioage(fit_cox, NHANES4)
+head(fit_cox$CoxBioage[, c("age", "Coxbioage")])
+```
+
+Cox 方法先用仅含年龄的模型估计年龄效应，再将这个效应作为 offset 固定到年龄加生物标志物的模型中。将指标系数除以参考年龄系数，即得到以年为单位的权重。Cox 的基线风险函数不指定为 Gompertz 形式。
+
+默认截距在训练集上计算，使训练集平均 Cox BioAge 等于平均实际年龄；预测新数据时保留训练截距。**0.2.1 修正了旧版 Cox 预测值中心化与年龄 offset 不一致的问题，因此默认分数水平会改变，拟合权重不变。** 如需复现旧版结果，使用 `cox_bioage(..., calibration = "legacy")`。已经保存的旧版拟合对象可直接传给 `predict_cox_bioage()`，仍使用其原截距。
+
+Cox 分数不是绝对死亡概率，训练集内与 Gompertz 分数相关也不能证明两种方法的外部预测性能等价。
+
+两套完整案例脚本均已加入相同训练样本上的 Cox 拟合、固定系数评分和 Gompertz/Cox 比较。详见 [Cox 专题教程](docs/cox-bioage.md) 和[在线公式推导](https://jerryhaom.github.io/GOLDBioAge/gompertz_cox_formulas.html)。最终 Cox 拟合与 GOLD 流程中的 Cox-LASSO 筛选是两个步骤，不能混为一谈。
+
+## 案例四：直接使用 NHANES 已发表系数
 
 如果只想算 GOLD BioAge，无需在自己的样本上重新拟合生存模型。先核对列名和单位，然后直接应用系数：
 
@@ -149,6 +175,6 @@ source("examples/01_simulated_gompertz.R")
 source("examples/02_nhanes.R")
 ```
 
-脚本会保留拟合对象和评分结果；保存 CSV 或 RDS 的代码默认注释，按需要启用。详细输入与返回值可查看 `?gold_bioage`、`?predict_gold_bioage`。版本变化见 [NEWS.md](NEWS.md)。
+脚本会保留拟合对象和评分结果；保存 CSV 或 RDS 的代码默认注释，按需要启用。详细输入与返回值可查看 `?gold_bioage`、`?predict_gold_bioage`、`?cox_bioage`、`?predict_cox_bioage`。版本变化见 [NEWS.md](NEWS.md)。
 
 论文：[Hao et al., Advanced Science, 2025](https://doi.org/10.1002/advs.202501765)。

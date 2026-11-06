@@ -104,13 +104,32 @@ elasticnet_fit$selected_vars
 
 The screening model is a biomarker-only Cox regression at `lambda.min`. Age is retained in the final Gompertz fit. Screening does not guarantee that the artificial noise variable is dropped. Rerunning with the same seed and software versions gives reproducible folds and selection. The function restores the caller's random-number state.
 
-## 6. Freeze and reuse the model
+## 6. Fit the Cox alternative on the same training participants
+
+```r
+cox_fit <- cox_bioage(train, variables)
+cox_fit$coefficients
+cox_fit$intercept
+test$Coxbioage <- predict_cox_bioage(cox_fit, test[, variables, drop = FALSE])
+test$Cox_age_difference <- test$Coxbioage - test$age
+c(mean_train_Cox_age_difference = mean(cox_fit$CoxBioage$Coxbioage - train$age),
+  mean_test_Cox_age_difference = mean(test$Cox_age_difference),
+  heldout_score_correlation = cor(test$GOLDbioage, test$Coxbioage))
+```
+
+Both fits use the same 1,600 development participants and fixed predictor set. The Cox baseline hazard is unspecified, while the Gompertz fit assumes a parametric follow-up hazard. The Cox age effect is fixed through an offset; its biomarker weights are converted to years, and its intercept is centered on training age by default. The held-out mean score difference is free to differ from zero. Correlation between the two held-out scores is descriptive, not a performance-equivalence test or clinical validation.
+
+The final Cox model is distinct from biomarker-only Cox screening used for optional GOLD feature selection. For formulas and the legacy calibration option, see the [Cox tutorial](cox-bioage.md).
+
+## 7. Freeze and reuse the model
 
 ```r
 # Save the coefficients locally when you want a persistent deployment artifact:
 # saveRDS(fit$coefficients, "gold_coefficients.rds")
 # frozen <- readRDS("gold_coefficients.rds")
 # future_scores <- predict_gold_bioage(frozen, future_biomarker_data)
+# saveRDS(cox_fit$score_coefficients, "cox_coefficients.rds")
+# future_cox_scores <- predict_cox_bioage(cox_fit$score_coefficients, future_biomarker_data)
 
 sessionInfo()
 ```

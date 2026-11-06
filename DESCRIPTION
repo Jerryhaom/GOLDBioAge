@@ -1,13 +1,14 @@
 Package: GOLDBioAge
 Type: Package
 Title: Biological Age Estimation Based on Gompertz Law
-Version: 0.2.0
+Version: 0.2.1
 Author: Meng Hao
 Maintainer: Meng Hao <haombio@gmail.com>
 Description: Fits Gompertz law-based biological age (GOLD BioAge) and Cox-based
     biological age models using survival follow-up and biomarkers. Supports
     optional penalized Cox feature selection and scoring new observations with
-    frozen GOLD BioAge coefficients. Includes NHANES example data and tutorials.
+    frozen GOLD or Cox biological age coefficients. Includes NHANES example data
+    and reproducible tutorials comparing the two approaches.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
