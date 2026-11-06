@@ -13,9 +13,9 @@ We independently fitted the GOLD and Light BioAge models to the NHANES and UKB d
 | RDW      | Erythrocyte | %                   | 2.6445                | 3.3162              |
 | ALB      | Liver       | g/dL                | -4.7358               | -5.0793             |
 | ALP      | Liver       | U/L                 | 0.0260                 | 0.0385              |
-| LYM%     | Immune      | %                   | 0.2032                | -0.1899             |
+| LYM%     | Immune      | %                   | -0.2032               | -0.1899             |
 | WBC      | Immune      | 1000 cells/uL       | 0.4459                | 0.9120              |
-| GGT      | Kidney      | U/L                 | -0.0608               | 0.1007              |
+| GGT      | Liver       | U/L                 | 0.0608                | 0.1007              |
 | Constant (β0) |        |                     | -53.6287              | -78.6519            |
 
 <br>
