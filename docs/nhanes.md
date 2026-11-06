@@ -53,7 +53,7 @@ These counts describe the distributed processed file and this predictor set. The
 
 The repository does not provide a complete raw-to-analysis preprocessing dictionary or explicit metadata for the stored follow-up unit. This tutorial retains `time` as distributed; custom cohorts must document and use a consistent follow-up unit, while `age` remains in years. Do not infer a unit from the column name alone.
 
-`sampleID` is an identifier and is excluded from the predictors. `lncrp` is already transformed in the bundled file; do not use it as raw CRP or assume its transform/units match the published Light BioAge model. The example below uses the GOLD biomarker set and requires no CRP transformation.
+`sampleID` is an identifier and is excluded from the predictors. `lncrp` is already transformed in the bundled file and must not be used as raw CRP. The consistency check below supports `ln(1 + CRP in mg/dL)` for this field. The example below uses the GOLD biomarker set and requires no CRP transformation.
 
 ## 3. Refit GOLD BioAge
 
@@ -147,7 +147,23 @@ Both fits use 39,348 complete observations with 4,716 deaths. The default calibr
 
 Version 0.2.1 changes the default Cox intercept calibration, without changing the fitted weights. `cox_bioage(NHANES4, variables, calibration = "legacy")` reproduces the old convention (training mean score approximately 53.56354 years here). See the [Cox tutorial](cox-bioage.md) for formulas, frozen scoring, and migration details.
 
-## 7. Interpret and export
+## 7. Check the bundled Light model and CRP scale
+
+```r
+light_fit <- gold_bioage(NHANES4, c("age", "creat", "glucose_mmol", "lncrp"))
+light_fit$coefficients
+light_training <- light_fit$GOLDBioage
+crp_mg_l <- 10 * expm1(light_training$lncrp)
+c(n = nrow(light_training), deaths = sum(light_training$status),
+  CRP_mean_mg_l = mean(crp_mg_l), CRP_sd_mg_l = sd(crp_mg_l),
+  descriptive_log_mean = mean(log1p(crp_mg_l)))
+```
+
+This gives 38,001 complete participants, 6,373 deaths, and approximate weights `creat = 8.3313781`, `glucose_mmol = 0.8270315`, `lncrp = 5.7305169`, `beta0 = -13.5298442`, with age weight 1. The original fixed Light model retains its supplied four-decimal values, including `creat = 8.3313`; this is a small difference from the refit, not an instruction to silently replace the reference model.
+
+The inverse transformation gives mean CRP 4.0718323 mg/L (SD 5.6681251), and `mean(log1p(crp_mg_l)) = 1.2570271`, agreeing with the existing descriptive table (4.07, 5.67, and 1.26). This supports `ln(1 + CRP in mg/dL)` as the scale of the bundled fitting field. The descriptive log column uses mg/L instead and cannot be substituted into the NHANES Light formula. These checks establish consistency of the processed file, not full raw-data provenance.
+
+## 8. Interpret and export
 
 ```r
 # Optional local exports:

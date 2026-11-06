@@ -61,6 +61,20 @@ print(c(mean_age = mean(nhanes_cox_fit$CoxBioage$age),
 stopifnot(isTRUE(all.equal(nhanes_scored$Coxbioage[nhanes_cox_fit$rows_used],
                            nhanes_cox_fit$CoxBioage$Coxbioage, tolerance = 1e-8)))
 
+# 6. Audit the bundled Light predictor and its CRP concentration scale.
+light_fit <- gold_bioage(NHANES4, c("age", "creat", "glucose_mmol", "lncrp"))
+print(light_fit$coefficients)
+light_training <- light_fit$GOLDBioage
+crp_mg_l <- 10 * expm1(light_training$lncrp)
+print(c(n = nrow(light_training), deaths = sum(light_training$status),
+        CRP_mean_mg_l = mean(crp_mg_l), CRP_sd_mg_l = sd(crp_mg_l),
+        descriptive_log_mean = mean(log1p(crp_mg_l))))
+stopifnot(nrow(light_training) == 38001L, sum(light_training$status) == 6373L)
+stopifnot(abs(mean(crp_mg_l) - 4.0718323) < 1e-6)
+stopifnot(abs(mean(log1p(crp_mg_l)) - 1.2570271) < 1e-6)
+# The descriptive log uses mg/L; the NHANES Light fitting field uses mg/dL.
+# This numerical consistency check does not reconstruct raw-data preprocessing.
+
 # Optional local export (uncomment to write files in your current directory):
 # write.csv(nhanes_scored, "NHANES_GOLDBioAge.csv", row.names = FALSE)
 # saveRDS(nhanes_fit$coefficients, "NHANES_refitted_coefficients.rds")

@@ -16,7 +16,7 @@ shape        = 0.08 per follow-up year
 
 `age` is chronological age at baseline. `t` is time elapsed since baseline; it is not attained age. A positive shape gives increasing hazard with follow-up. `marker_risk` and `marker_protective` are arbitrary standardized numerical markers. `noise` has no direct effect in the data-generating model.
 
-The [flexsurv regression documentation](https://chjackson.github.io/flexsurv/reference/flexsurvreg.html) specifies that Gompertz covariates act on log rate. GOLD fits an age-only model to estimate a reference age effect, fixes that **age coefficient** in the final age-plus-biomarker model, divides biomarker coefficients by the reference age effect, and estimates a cohort-centering intercept. The Gompertz follow-up shape is a different parameter and remains estimated.
+The [flexsurv regression documentation](https://chjackson.github.io/flexsurv/reference/flexsurvreg.html) specifies that Gompertz covariates act on log rate. GOLD fits an age-only model to estimate a reference age effect, fixes that **age coefficient** in the final age-plus-biomarker model, divides biomarker coefficients by the reference age effect, and estimates a cohort-centering intercept. The Gompertz follow-up shape is a different parameter and remains estimated. GOLD evaluates instantaneous hazards at baseline ($t=0$), so the shape factor equals 1 and is absent from the final age equation; see the [equations and code](mathematics-and-code.md).
 
 ## 2. Generate participants and censoring
 

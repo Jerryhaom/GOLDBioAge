@@ -80,11 +80,11 @@
 <body>
 
 <h1>GOLD and Cox BioAge: Derivation and R Examples</h1>
-<nav aria-label="Tutorial sections"><a href="#cox">Cox derivation</a> · <a href="#r-examples">R fitting example</a> · <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/docs/cox-bioage.md">Full Cox tutorial</a></nav>
+<nav aria-label="Tutorial sections"><a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/Coefficients.md">Cohort coefficients</a> · <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/docs/mathematics-and-code.md">Equations and code guide</a> · <a href="#cox">Cox derivation</a> · <a href="#r-examples">R fitting example</a> · <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/docs/cox-bioage.md">Full Cox tutorial</a></nav>
 <p style="font-size:0.9rem; color:#444;">Based on the framework by Hao et al. (<em>Advanced Science</em>) – a proportional hazards approach to transform clinical biomarkers into a mortality‑calibrated age measure.</p>
 
 <h2>1. Gompertz model for mortality</h2>
-<p>The Gompertz distribution is widely used to model adult mortality. Its hazard function increases exponentially with age, capturing the accelerating risk of death. The two‑parameter Gompertz hazard is:</p>
+<p>The Gompertz distribution is widely used to model adult mortality. In this package, \(t\) denotes elapsed follow-up time and chronological age is a separate baseline covariate. The hazard increases exponentially with follow-up when the shape parameter is positive. The two‑parameter Gompertz hazard is:</p>
 <div class="formula">
 \[
 h(t \mid a,b) = b e^{a t}
@@ -96,6 +96,8 @@ h(t \mid a,b) = b e^{a t}
 H(t) = \frac{b}{a}(e^{a t} - 1), \qquad S(t) = \exp\!\left(-\frac{b}{a}(e^{a t} - 1)\right).
 \]
 </div>
+
+<p>The displayed cumulative hazard assumes \(a\ne0\). At \(a=0\), its continuous limit is \(H(t)=bt\), the exponential distribution. The Gompertz follow-up shape is distinct from the coefficient of baseline chronological age.</p>
 
 <h2>2. Proportional hazards formulation with covariates</h2>
 <p>In a proportional hazards framework, covariates shift the hazard multiplicatively. For an individual with chronological age (CA) and a set of biomarkers, the Gompertz hazard becomes:</p>
@@ -154,7 +156,7 @@ b_1 e^{\beta_1 \cdot \text{BioAge}} = \gamma \cdot b_2 \exp\!\left(\beta_2 \cdot
 \text{BioAge} = \frac{1}{\beta_1}\left(\beta_2 \cdot \text{age} + \sum \beta_i X_i + \ln\frac{\gamma b_2}{b_1}\right).
 \]
 </div>
-<p>To keep the interpretation simple, the coefficient for chronological age is often constrained to be equal across models (\(\beta_2 = \beta_1\)). The final formula becomes:</p>
+<p>To keep the interpretation simple, this package constrains the coefficient for chronological age to be equal across models (\(\beta_2 = \beta_1\)). The final formula becomes:</p>
 <div class="formula">
 \[
 \boxed{\text{GOLD BioAge} = \text{age} + \frac{1}{\beta_1}\sum \beta_i X_i + \frac{1}{\beta_1}\ln\frac{\gamma b_2}{b_1}}.
@@ -164,7 +166,11 @@ b_1 e^{\beta_1 \cdot \text{BioAge}} = \gamma \cdot b_2 \exp\!\left(\beta_2 \cdot
 \(\ln\gamma=\operatorname{mean}_{\mathrm{train}}[\ln\{h_1(0\mid A)/h_2(0\mid A,X)\}]\).
 Together with the fixed age effect, this makes the intercept equal to
 \(b_0=\operatorname{mean}_{\mathrm{train}}(A-s)\), where
-\(s=A+\sum_i\beta_iX_i/\beta_1\). Mean training GOLD BioAge therefore equals mean training chronological age by construction. In the bundled NHANES fit, the GOLD intercept is approximately -53.62873289 years; it is not a universal +4.7-year correction. Keep the fitted intercept fixed when scoring new data.</p>
+\(s=A+\sum_i\beta_iX_i/\beta_1\). Mean training GOLD BioAge therefore equals mean training chronological age by construction. In the bundled NHANES fit, the GOLD intercept is approximately -53.62873289 years. Keep the fitted intercept fixed when scoring new data.</p>
+
+<h3>3.2 Why the follow-up shape is absent at baseline</h3>
+<p>GOLD matches <strong>instantaneous hazards at \(t=0\)</strong>. Then \(e^{a_1\cdot0}=e^{a_2\cdot0}=1\), even if the fitted shapes differ. The baseline age equation therefore contains no follow-up shape term and does not require fixing a common shape. This is the definition implemented by the package and the supplied coefficient models.</p>
+<p>The shapes still participate in likelihood estimation using all observed follow-up. Fixing a shape and refitting can change the estimated rate and biomarker effects. A common shape can be imposed before a separate constrained regression, but that is optional for modeling and unnecessary for baseline evaluation. See the <a href="https://github.com/Jerryhaom/GOLDBioAge/blob/main/docs/mathematics-and-code.md">equations and direct constraint code</a>.</p>
 
 <h2 id="cox">4. Cox-derived biological age</h2>
 <p>The same conversion of biomarker effects to age units can be used with Cox proportional-hazards regression. First fit an age-only reference model, then fix its age effect through an offset in a model containing the biomarkers:</p>
@@ -174,7 +180,7 @@ h_1(t\mid A)=h_{01}(t)e^{\beta_A A},\qquad
 h_2(t\mid A,X)=h_{02}(t)\exp\left(\beta_A A+\sum_j\theta_jX_j\right).
 \]
 </div>
-<p>The Cox baseline hazards are unspecified and need not be equal. Define the uncalibrated age score and one intercept on the complete-case training sample:</p>
+<p>Standard Cox regression has no Gompertz follow-up shape parameter. The offset fixes the baseline-age coefficient; it does not specify a Gompertz baseline hazard. The two fitted Cox baseline hazards are unspecified and need not be equal. Define the uncalibrated age score and one intercept on the complete-case training sample:</p>
 <div class="formula">
 \[
 s_i=A_i+\sum_j\frac{\theta_j}{\beta_A}X_{ij},\qquad
@@ -207,57 +213,30 @@ b_0=\frac{1}{n_{\mathrm{train}}}\sum_{i\in\mathrm{train}}(A_i-s_i).
 <p>In the current R package, <code>gold_bioage(feature_selection = TRUE)</code> uses a biomarker-only penalized Cox model to select predictors, then fits a final <em>Gompertz</em> model with age retained. The implemented selector uses <code>lambda.min</code>, with LASSO or elastic net and a configurable fold count and seed. It does not automatically perform bootstrap stability assessment. This screening step is different from calling <code>cox_bioage()</code> to fit the final Cox-derived score.</p>
 <p>Perform feature selection and preprocessing inside the development sample. The full GOLD example uses nine biomarkers plus age: creatinine, glucose, MCV, RDW, albumin, ALP, lymphocyte percentage, WBC, and GGT. See the original article for its research analyses and the package tutorials for the currently executable workflow.</p>
 
-<h2>6. Derivation of Levine’s Phenotypic Age</h2>
-<p>Levine’s Phenotypic Age <sup>[1]</sup> is also grounded in the Gompertz model but uses the <em>cumulative distribution function</em> to match 10‑year mortality risk. Two Gompertz proportional hazards models are constructed:</p>
-<div class="block">
-<p><strong>Model A</strong> (only chronological age):</p>
+<h2>6. Separate comparison: cumulative-risk matching and Phenotypic Age</h2>
+<p>This section concerns matching cumulative risk at a positive follow-up horizon, rather than GOLD's instantaneous baseline definition above. At time zero, cumulative event probabilities are zero and cannot identify an equivalent age. Levine et al.'s clinical Phenotypic Age uses a 10-year mortality-risk conversion. The distinction between cumulative-risk matching and baseline-hazard matching should not be confused with the availability of a closed-form calculation. Both can simplify to an affine score for fixed models and a fixed time horizon.</p>
+<p>If Model 2 fixes its shape to Model 1 before regression, the two cumulative-hazard time factors are identical and cancel directly. The shared-shape derivation is valid under that fitted constraint. For completeness, the general expression below also covers separately fitted shapes. Define:</p>
 <div class="formula">
 \[
-F_1(t=120, \text{PhenoAge}) = 1 - \exp\!\left(-\exp(\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right)
+C_k(T)=\begin{cases}(e^{a_kT}-1)/a_k,&amp;a_k\ne0,\\T,&amp;a_k=0,\end{cases}
+\qquad F_k(T)=1-\exp\{-e^{\eta_k}C_k(T)\}.
 \]
 </div>
-<p><strong>Model B</strong> (age + biomarkers):</p>
+<p>For the age-only reference let \(\eta_1=\alpha_1+\beta_A B\), where \(B\) is the age to be found. The full-model predictor \(\eta_2(A,X)\) includes its own intercept. Equating cumulative risks at the same horizon gives:</p>
 <div class="formula">
 \[
-F_2(t=120, \text{age}, \mathbf{X}) = 1 - \exp\!\left(-\exp(\mathbf{X}\hat{\boldsymbol{\beta}}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right)
+\boxed{B=\frac{\eta_2(A,X)-\alpha_1+\ln\{C_2(T)/C_1(T)\}}{\beta_A}.}
 \]
 </div>
-<p>where \(\mathbf{X}\hat{\boldsymbol{\beta}} = \hat{\beta}_0 + \hat{\beta}_{\text{age}}\cdot\text{age} + \sum \hat{\beta}_i X_i\). The time horizon \(t=120\) months corresponds to 10 years.</p>
-</div>
-<p>The underlying idea is to find the hypothetical age (PhenoAge) such that the 10‑year mortality risk predicted by Model A (using only that age) equals the risk predicted by Model B (using actual age and biomarkers). Thus we set:</p>
+<p>Under the shared-shape constraint, the two \(C_k(T)\) factors cancel. With separately estimated, different shapes, their ratio contributes a constant at a fixed horizon; omitting that term changes the intercept. Time must use the same unit as the fitted shape parameters. For a 10-year horizon expressed in months, \(T=120\).</p>
+<p>The published Phenotypic Age conversion is commonly written:</p>
 <div class="formula">
 \[
-F_1(t=120, \text{PhenoAge}) = F_2(t=120, \text{age}, \mathbf{X}).
+\mathrm{Phenotypic\ Age}=141.50225+
+\frac{\ln[-0.00553\ln\{1-F_2(120,X)\}]}{0.090165}.
 \]
 </div>
-<p>Substituting the cumulative distribution expressions gives:</p>
-<div class="formula">
-\[
-1 - \exp\!\left(-\exp(\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right) =
-1 - \exp\!\left(-\exp(\mathbf{X}\hat{\boldsymbol{\beta}}) \cdot \frac{e^{120 \hat{a}} - 1}{\hat{a}}\right).
-\]
-</div>
-<p>Cancelling the outer \(1-\exp(\cdot)\) and equating the inner arguments yields:</p>
-<div class="formula">
-\[
-\exp(\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge}) = \exp(\mathbf{X}\hat{\boldsymbol{\beta}}).
-\]
-</div>
-<p>Taking logarithms and solving for PhenoAge:</p>
-<div class="formula">
-\[
-\hat{\beta}_0 + \hat{\beta}_1 \cdot \text{PhenoAge} = \mathbf{X}\hat{\boldsymbol{\beta}} \quad\Rightarrow\quad
-\text{PhenoAge} = \frac{\mathbf{X}\hat{\boldsymbol{\beta}} - \hat{\beta}_0}{\hat{\beta}_1}.
-\]
-</div>
-<p>In practice, the parameters are estimated from the data. Using the NHANES‑derived coefficients, the final formula is expressed as:</p>
-<div class="formula">
-\[
-\text{Phenotypic Age} = 141.50225 + \frac{\ln\!\bigl(-0.00553 \cdot \ln(1 - F_2(120,X))\bigr)}{0.090165},
-\]
-</div>
-<p>where \(F_2(120,X)\) is the predicted 10‑year mortality risk from Model B, and the constants stem from the fitted Gompertz shape and the linear predictor coefficients. This formulation is algebraically equivalent to the linear expression above but is presented in a form that directly incorporates the estimated Gompertz parameters.</p>
-<p>While both GOLD BioAge and Levine’s Phenotypic Age rely on the Gompertz law, they differ in the aspect of risk used: GOLD BioAge uses the <em>instantaneous hazard</em> at baseline (\(t=0\)), leading to a simple linear combination of biomarkers; Phenotypic Age uses the 10‑year <em>cumulative risk</em>, which requires solving for the quantile of the cumulative distribution. Both measures are highly correlated and predict mortality similarly, but GOLD BioAge offers greater computational simplicity and direct interpretability as an age‑equivalent mortality rate.</p>
+<p>This formula uses its own published biomarker coefficients, transformations, and units. They must not be replaced by GOLD or Light coefficients. The R package and calculator described here implement GOLD/Light and the documented Cox alternative, rather than a Phenotypic Age calculation. See <a href="https://doi.org/10.18632/aging.101414">Levine et al., <em>Aging</em> (2018)</a> for the original model. Agreement in mathematical form does not establish equal predictive performance.</p>
 
 <h2 id="r-examples">7. Run Gompertz and Cox fitting in R</h2>
 <p>Install GOLDBioAge 0.2.1 or later using <code>remotes::install_github("Jerryhaom/GOLDBioAge")</code>, then run:</p>

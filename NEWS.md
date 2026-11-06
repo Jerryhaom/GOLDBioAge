@@ -1,3 +1,10 @@
+# GOLDBioAge 0.2.2
+
+- Reorganize the English and Chinese READMEs around two tasks: apply existing cohort coefficients, or fit a new model. Pair the equations with runnable R code and worked numerical results.
+- Add an installed reference file, `extdata/published_coefficients.csv`, containing the five existing GOLD/Light coefficient sets (37 terms) with input units, transformations, and supplied precision. Keep the original cohort values; retain the supplied higher precision for NHANES GOLD.
+- Expand `Coefficients.md` to include the original NHANES/UKB GOLD and NHANES/UKB/CHARLS Light tables, fixed-score examples, CRP unit handling, and a separately labeled NHANES Cox refit example.
+- Add a formula-to-code guide, a reader-oriented update/migration guide, and an executable example for all five existing coefficient sets. Fitting and scoring algorithms remain as in 0.2.1. Clarify that GOLD matches instantaneous hazards at baseline, where both follow-up shape factors equal 1 without a common-shape constraint.
+
 # GOLDBioAge 0.2.1
 
 - Add Cox fitting, frozen scoring, and Gompertz/Cox comparisons to the simulated and NHANES examples, both READMEs, and a dedicated Cox tutorial. Update the online methodological derivation with the package's explicit calibration convention and executable example.
