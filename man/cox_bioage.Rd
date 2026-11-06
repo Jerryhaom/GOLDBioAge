@@ -2,38 +2,30 @@
 % Please edit documentation in R/coxbioage.R
 \name{cox_bioage}
 \alias{cox_bioage}
-\title{Calculate biological age using Cox regression model}
+\title{Fit a Cox regression biological age model}
 \usage{
 cox_bioage(d4, var)
 }
 \arguments{
-\item{d4}{Dataframe containing survival information (time, status)}
+\item{d4}{Data frame containing numeric model columns, non-negative \code{time},
+and \code{status} coded 0 (censored) or 1 (event).}
 
-\item{var}{Character vector of variable names (must include 'age')}
+\item{var}{Unique predictor column names including \code{age}, in any order.}
 }
 \value{
-A list containing:
-\itemize{
-\item model1_coef: Coefficients from Model 1
-\item model2_coef: Coefficients from Model 2
-\item coefficients: Biological age coefficients
-\item Bioage: Dataframe with calculated biological age
-}
+A list with \code{"model1 coef"}, \code{"model2 coef"}, \code{coefficients} (the
+original coefficient matrix), \code{intercept}, \code{CoxBioage} (complete-case data
+with numeric \code{Coxbioage}), \code{rows_used}, and \code{rows_omitted}.
 }
 \description{
-Computes biological age based on two Cox regression models:
-\itemize{
-\item Cox Model 1: Surv(time, status) ~ age
-\item Cox Model 2: Surv(time, status) ~ age + Biomarkers
-}
+Fits an age-only Cox model and a biomarker model with the age coefficient
+fixed by an offset. This is a Cox-based alternative to GOLD BioAge.
 }
 \examples{
-head(NHANES4)
-var <- c(
-  "age", "albumin", "alp", "creat",
-  "glucose_mmol", "lymph",
-  "mcv", "rdw", "wbc", "ggt"
-)
-
-Cox.bioage <- cox_bioage(NHANES4, var)
+\donttest{
+data(NHANES4)
+variables <- c("age", "albumin", "creat", "glucose_mmol")
+fit <- cox_bioage(NHANES4, variables)
+fit$coefficients
+}
 }

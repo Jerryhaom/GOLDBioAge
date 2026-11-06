@@ -1,74 +1,46 @@
-#' Calculate biological age using Cox regression model
+#' Fit a Cox regression biological age model
 #'
 #' @description
-#' Computes biological age based on two Cox regression models:
-#' \itemize{
-#'   \item Cox Model 1: Surv(time, status) ~ age
-#'   \item Cox Model 2: Surv(time, status) ~ age + Biomarkers
-#' }
-#'
-#' @param d4 Dataframe containing survival information (time, status)
-#' @param var Character vector of variable names (must include 'age')
-#'
-#' @return A list containing:
-#' \itemize{
-#'   \item model1_coef: Coefficients from Model 1
-#'   \item model2_coef: Coefficients from Model 2
-#'   \item coefficients: Biological age coefficients
-#'   \item Bioage: Dataframe with calculated biological age
-#' }
-#'
-#' @importFrom stats as.formula na.omit
-#' @importFrom survival Surv
+#' Fits an age-only Cox model and a biomarker model with the age coefficient
+#' fixed by an offset. This is a Cox-based alternative to GOLD BioAge.
+#' @param d4 Data frame containing numeric model columns, non-negative `time`,
+#'   and `status` coded 0 (censored) or 1 (event).
+#' @param var Unique predictor column names including `age`, in any order.
+#' @return A list with `"model1 coef"`, `"model2 coef"`, `coefficients` (the
+#'   original coefficient matrix), `intercept`, `CoxBioage` (complete-case data
+#'   with numeric `Coxbioage`), `rows_used`, and `rows_omitted`.
 #' @export
-#'
 #' @examples
-#' head(NHANES4)
-#' var <- c(
-#'   "age", "albumin", "alp", "creat",
-#'   "glucose_mmol", "lymph",
-#'   "mcv", "rdw", "wbc", "ggt"
-#' )
-#'
-#' Cox.bioage <- cox_bioage(NHANES4, var)
-
+#' \donttest{
+#' data(NHANES4)
+#' variables <- c("age", "albumin", "creat", "glucose_mmol")
+#' fit <- cox_bioage(NHANES4, variables)
+#' fit$coefficients
+#' }
 cox_bioage <- function(d4, var) {
-  data <- data.frame(
-    time = d4$time,
-    status = d4$status,
-    d4[, var]
-  )
-  data <- na.omit(data)
-
-  data1 <- data
-  fitg1 <- survival::coxph(survival::Surv(time, status) ~ age, data = data1)
-  coef1 <- coef(fitg1)
-
-  ############
-  coef_fixed <- coef1[1]
-  formula_str <- paste0("survival::Surv(time, status) ~ offset(", coef_fixed, " * age) + ",
-                        paste(var[-1], collapse = " + "))
-  fit_fixed <- survival::coxph(as.formula(formula_str), data = data1)
-  coef2 = c(coef_fixed, coef(fit_fixed))
-
-  risk <- exp(predict(fitg1, type = "lp"))
-  risk2 <- exp(predict(fit_fixed, type = "lp"))
-
-  coef21=matrix(coef2[1:length(coef2)])/coef1[1]
-  rownames(coef21)=var
-  coef21
-
-  x <- as.matrix(data[, var]) %*% as.matrix(coef21)
-  la<-risk/risk2
-
-  x0=mean(log(la)/coef1[1]) #(coef2[1]-coef1[1])
-  bioage <- x0 + x
-  data$Coxbioage <- bioage
-
-  list(
-    `model1 coef` = coef1,
-    `model2 coef` = coef2,
-    `coefficients` = coef21,
-    `CoxBioage` = data
-  )
+  prepared <- .prepare_bioage_data(d4, var)
+  data <- prepared$data
+  var <- prepared$var
+  fitg1 <- survival::coxph(.bioage_formula("age"), data = data)
+  coef1 <- stats::coef(fitg1)
+  age_effect <- unname(coef1["age"])
+  if (!is.finite(age_effect) || abs(age_effect) < sqrt(.Machine$double.eps)) {
+    stop("The age-only age coefficient is zero or non-finite; cannot express effects in years.")
+  }
+  if (length(var) == 1L) {
+    fit_fixed <- fitg1
+    coef2 <- coef1
+  } else {
+    fit_fixed <- survival::coxph(.bioage_formula(setdiff(var, "age"), offset_age = age_effect),
+                                 data = data)
+    coef2 <- c(age = age_effect, stats::coef(fit_fixed))
+  }
+  coefficients <- matrix(coef2[var] / age_effect, ncol = 1L, dimnames = list(var, NULL))
+  linear_score <- as.vector(as.matrix(data[, var, drop = FALSE]) %*% coefficients)
+  intercept <- mean(stats::predict(fitg1, type = "lp") -
+                    stats::predict(fit_fixed, type = "lp")) / age_effect
+  data$Coxbioage <- as.numeric(linear_score + intercept)
+  list(`model1 coef` = coef1, `model2 coef` = coef2,
+       coefficients = coefficients, intercept = intercept, CoxBioage = data,
+       rows_used = prepared$rows_used, rows_omitted = prepared$rows_omitted)
 }

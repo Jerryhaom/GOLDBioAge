@@ -2,38 +2,75 @@
 % Please edit documentation in R/bioage.R
 \name{gold_bioage}
 \alias{gold_bioage}
-\title{Calculate biological age using Gompertz model}
+\title{Fit a GOLD BioAge model using Gompertz regression}
 \usage{
-gold_bioage(d4, var)
+gold_bioage(
+  d4,
+  var,
+  feature_selection = FALSE,
+  selection_method = "lasso",
+  alpha = 1,
+  nfolds = 10,
+  family = "cox",
+  seed = 123
+)
 }
 \arguments{
-\item{d4}{Dataframe containing survival information (time, status)}
+\item{d4}{Data frame with numeric predictors, non-negative follow-up \code{time},
+and \code{status} coded 0 (censored) or 1 (event). Age must be measured in years.}
 
-\item{var}{Character vector of variable names (must include 'age')}
+\item{var}{Unique predictor column names including \code{age}, in any order.
+Names refer to columns, not formula expressions. Rows missing any model
+variable are omitted and their original positions are returned.}
+
+\item{feature_selection}{Apply optional Cox penalized regression to the
+candidate biomarkers before the final Gompertz fit. Age is always retained.}
+
+\item{selection_method}{\code{"lasso"}, \code{"elasticnet"}, or \code{"none"}. The \code{"none"}
+option disables selection even if \code{feature_selection = TRUE}.}
+
+\item{alpha}{Elastic-net mixing parameter between 0 and 1; ignored for LASSO.}
+
+\item{nfolds}{Number of cross-validation folds, at least 3.}
+
+\item{family}{Must be \code{"cox"}; retained for compatibility.}
+
+\item{seed}{Seed for cross-validation (default 123). The caller's random
+number state is restored afterwards. Use \code{NULL} to use the caller's state.}
 }
 \value{
-A list containing:
-\itemize{
-\item model1_coef: Coefficients from Model 1
-\item model2_coef: Coefficients from Model 2
-\item coefficients: Biological age coefficients
-\item Bioage: Dataframe with calculated biological age
-}
+A list retaining the existing fields \code{"model1 coef"}, \code{"model2 coef"},
+\code{coefficients} (a named numeric vector including \code{beta0}), and \code{GOLDBioage}
+(complete-case training data with a numeric \code{GOLDbioage} column). Additional
+fields are \code{selected_vars}, \code{original_vars}, \code{rows_used}, \code{rows_omitted},
+\code{models} (the two fitted Gompertz models), and \code{cv_plot} (\code{NULL} without
+selection). The selected model also returns \code{cv_fit} for diagnostics.
 }
 \description{
-Computes biological age based on two Gompertz regression models:
-\itemize{
-\item Gompertz Model 1: Surv(time, status) ~ age
-\item Gompertz Model 2: Surv(time, status) ~ age + Biomarkers
+Fits an age-only Gompertz survival model, then an age-plus-biomarker model
+with its age coefficient fixed to the age-only estimate. Biomarker effects
+are expressed in years, and the intercept centers mean GOLD BioAge on mean
+chronological age in the complete-case training sample.
 }
+\details{
+Selection uses the biomarker-only Cox model at \code{lambda.min}; age is added
+to the final Gompertz model. This screening step does not constitute external
+validation. It requires the optional packages \code{glmnet} and \code{ggplot2}, strictly
+positive follow-up times, and at least \code{nfolds} events. Training and selection
+must be restricted to the development sample.
+Breslow handling of tied events is retained across supported \code{glmnet} versions.
+
+This function refits a model on \code{d4}; it does not automatically apply the
+published NHANES or UKB coefficients. Use \code{\link[=predict_gold_bioage]{predict_gold_bioage()}} with frozen
+fitted coefficients or a named published coefficient vector to score new data.
 }
 \examples{
-head(NHANES4)
-var <- c(
-  "age", "albumin", "alp", "creat",
-  "glucose_mmol", "lymph",
-  "mcv", "rdw", "wbc", "ggt"
-)
-
-GOLD.bioage <- gold_bioage(NHANES4, var)
+\donttest{
+data(NHANES4)
+variables <- c("age", "albumin", "alp", "creat", "glucose_mmol",
+               "lymph", "mcv", "rdw", "wbc", "ggt")
+fit <- gold_bioage(NHANES4, variables)
+fit$coefficients
+scores <- predict_gold_bioage(fit, NHANES4)
+}
 }

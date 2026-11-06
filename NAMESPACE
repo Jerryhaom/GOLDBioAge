@@ -2,7 +2,4 @@
 
 export(cox_bioage)
 export(gold_bioage)
-importFrom(flexsurv,flexsurvreg)
-importFrom(stats,as.formula)
-importFrom(stats,na.omit)
-importFrom(survival,Surv)
+export(predict_gold_bioage)
