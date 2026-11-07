@@ -71,14 +71,7 @@ $$
 | ln(1 + CRP) / `log_crp` | CRP in mg/dL | 5.7305 | CRP in mg/L | 4.1689 | CRP in mg/L | 4.2983 |
 | Intercept / `beta0` | years | -13.5298 | years | -20.1395 | years | -16.7562 |
 
-The logarithm is natural. In R, use `log1p(CRP)`. Convert the raw CRP concentration to the required unit **before** taking the logarithm:
-
-$$
-0.3\ \mathrm{mg/dL}=3\ \mathrm{mg/L},\qquad
-\ln(1+0.3)\ne\ln(1+3).
-$$
-
-`predict_gold_bioage()` can evaluate these named fixed Light coefficient vectors after you supply the correctly transformed `log_crp` column. It does not transform CRP or convert units automatically. A refit using bundled `NHANES4$lncrp` gives closely agreeing NHANES Light weights, with small differences from the original fixed reference documented in the NHANES tutorial. Its inverse transformation is consistent with CRP in mg/dL: `10 * expm1(lncrp)` reproduces the reported CRP summary in mg/L. This numerical check does not reconstruct the original raw-data preprocessing. For new measurements, construct `log_crp` from a raw concentration with a known unit.
+Here, `log(CRP)` denotes the natural logarithm `ln(CRP + 1)`, calculated in R as `log1p(CRP)`. CRP must be expressed in **mg/dL for NHANES** and **mg/L for UKB and CHARLS** before taking the logarithm.
 
 ## 4. Read the coefficients and calculate a GOLD score
 
