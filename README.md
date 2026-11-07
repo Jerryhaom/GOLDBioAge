@@ -67,7 +67,7 @@ predict_gold_bioage(beta_ukb, person)
 # 50.7472 years.
 ```
 
-See [Coefficients.md](Coefficients.md) for every coefficient, input unit, Light's `log1p(CRP)` transformation, and executable examples. NHANES Light uses CRP in mg/dL inside the logarithm; UKB/CHARLS use mg/L. Keep units, transformations, weights, and intercept together.
+See [Coefficients.md](Coefficients.md) for the coefficients, input units, and calculation examples. For Light BioAge, `log(CRP)` denotes the natural logarithm `ln(CRP + 1)`, calculated in R as `log1p(CRP)`. CRP must be expressed in **mg/dL for NHANES** and **mg/L for UKB and CHARLS** before taking the logarithm.
 
 ## Fit GOLD and Cox on NHANES
 

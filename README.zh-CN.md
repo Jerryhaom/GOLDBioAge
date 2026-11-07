@@ -88,7 +88,9 @@ Light 的公式是：
 $$\mathrm{Light}=A+w_C\mathrm{CREA}+w_G\mathrm{GLU}
 ++w_R\ln(1+\mathrm{CRP})+b_0.$$
 
-先换算原始浓度，再取自然对数。NHANES 要求 CRP 为 **mg/dL**，UKB/CHARLS 要求 **mg/L**；`log1p(0.3)` 与 `log1p(3)` 不同。在相同浓度 CRP = 0.3 mg/dL = 3 mg/L 下：
+这里的 `log(CRP)` 指自然对数 `ln(CRP + 1)`，在 R 中使用 `log1p(CRP)`。取对数前，CRP 的单位为 **NHANES：mg/dL；UKB 和 CHARLS：mg/L**。
+
+以 CRP = 0.3 mg/dL = 3 mg/L 为例：
 
 ```r
 nhanes_light <- 50 + 8.3313 * 1 + 0.8270 * 5 + 5.7305 * log1p(0.3) - 13.5298
@@ -97,7 +99,7 @@ c(NHANES = nhanes_light, UKB = ukb_light)
 # 50.43997842 岁与 53.38262256 岁。
 ```
 
-在线 calculator 对两个数据库均要求输入 mg/dL，并在 UKB Light 内部乘以 10。R 预测函数要求你事先完成转换。不同数据库模型有不同权重和截距，结果不同是正常的。
+在线 calculator 的 CRP 输入单位统一为 mg/dL，UKB Light 会自动换算为 mg/L。
 
 ## 4. 重新拟合 NHANES：Gompertz 与 Cox
 
