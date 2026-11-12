@@ -2,7 +2,7 @@
 
 Fit **Gompertz law-based biological age (GOLD BioAge)** or a **Cox-derived age score**, and calculate scores for new participants with fixed coefficients.
 
-[中文说明](README.zh-CN.md) · [Equations and code](docs/mathematics-and-code.md) · [Cohort coefficients](Coefficients.md) · [Updates](docs/package-updates.md) · [Online calculator](https://jerryhaom.github.io/GOLDBioAgeWeb.io/)
+[中文说明](README.zh-CN.md) · [Usage: reproduce NHANES](Usage.md) · [Equations and code](docs/mathematics-and-code.md) · [Cohort coefficients](Coefficients.md) · [Updates](docs/package-updates.md) · [Online calculator](https://jerryhaom.github.io/GOLDBioAgeWeb.io/)
 
 ## Choose your workflow
 
@@ -71,6 +71,8 @@ See [Coefficients.md](Coefficients.md) for the coefficients, input units, and ca
 
 ## Fit GOLD and Cox on NHANES
 
+To reproduce **GOLD and Light BioAge**, follow the [usage guide](Usage.md) or run [04_reproduce_nhanes.R](examples/04_reproduce_nhanes.R). The verified GOLD refit reproduces all nine biomarker weights at the supplied eight-decimal precision; its intercept is `-53.62873289`, compared with the fixed reference `-53.62873`. Light coefficients agree closely, with a small last-digit difference such as creatinine `8.3313781` versus `8.3313`.
+
 ```r
 data("NHANES4", package = "GOLDBioAge")
 variables <- c("age", "albumin", "alp", "creat", "glucose_mmol",
@@ -97,6 +99,7 @@ For your own cohort, use numeric predictors, baseline `age` in years, non-negati
 
 | Guide | Content | Runnable script |
 |---|---|---|
+| [Usage: reproduce NHANES GOLD and Light](Usage.md) | Refit both models, compare expected coefficients, and reproduce scores | [04_reproduce_nhanes.R](examples/04_reproduce_nhanes.R) |
 | [Mathematics and R code](docs/mathematics-and-code.md) | Symbols, derivation, weighted sum, CRP units | Code beside equations |
 | [Simulated Gompertz data](docs/simulated-gompertz.md) | Simulate events/censoring, split training/test, fit GOLD and Cox | [01_simulated_gompertz.R](examples/01_simulated_gompertz.R) |
 | [NHANES example](docs/nhanes.md) | Data counts, reproduced weights, fitted and fixed scoring | [02_nhanes.R](examples/02_nhanes.R) |

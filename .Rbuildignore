@@ -1,5 +1,6 @@
 ^README\.md$
 ^README\.zh-CN\.md$
+^Usage\.md$
 ^docs$
 ^examples$
 ^\.github$
