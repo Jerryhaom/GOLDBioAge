@@ -2,7 +2,7 @@
 
 本包可以用 Gompertz 回归拟合 **GOLD BioAge**，用 Cox 回归拟合另一种年龄评分，也可以把已有系数应用到新参与者的数据。
 
-[English](README.md) · [数学公式与代码](docs/mathematics-and-code.md) · [各数据库系数](Coefficients.md) · [更新与版本迁移](docs/package-updates.md) · [在线 calculator](https://jerryhaom.github.io/GOLDBioAgeWeb.io/)
+[English](README.md) · [Usage：NHANES 复现](Usage.md) · [数学公式与代码](docs/mathematics-and-code.md) · [各数据库系数](Coefficients.md) · [更新与版本迁移](docs/package-updates.md) · [在线 calculator](https://jerryhaom.github.io/GOLDBioAgeWeb.io/)
 
 ## 先选择你要做的事
 
@@ -103,6 +103,8 @@ c(NHANES = nhanes_light, UKB = ukb_light)
 
 ## 4. 重新拟合 NHANES：Gompertz 与 Cox
 
+复现 **GOLD 和 Light BioAge** 可直接按照 [Usage 使用指南](Usage.md)操作，或运行[完整复现脚本](examples/04_reproduce_nhanes.R)。已验证的 GOLD 重新拟合结果中，9 项指标系数与原系数保留 8 位小数后全部一致；拟合截距为 `-53.62873289`，原固定截距为 `-53.62873`。Light 系数非常接近原参考值，存在末位小差异，例如肌酐为 `8.3313781`，原参考值为 `8.3313`。
+
 ```r
 data("NHANES4", package = "GOLDBioAge")
 variables <- c("age", "albumin", "alp", "creat", "glucose_mmol",
@@ -129,11 +131,12 @@ b_0=\operatorname{mean}_{\mathrm{train}}\left(A-\left[A+\sum_jw_jX_j\right]\righ
 
 ## 5. 建议阅读顺序
 
-1. [公式与代码对照](docs/mathematics-and-code.md)：每个符号对应什么、加权和怎样算、权重和截距怎样得到。
-2. [模拟 Gompertz 教程](docs/simulated-gompertz.md)：生成事件和删失，分训练/测试，拟合 GOLD/Cox 后固定系数预测；[完整脚本](examples/01_simulated_gompertz.R)。
-3. [NHANES 教程](docs/nhanes.md)：检查数据、复现系数、保留行序、固定模型计算；[完整脚本](examples/02_nhanes.R)。
-4. [原有数据库系数与案例](Coefficients.md)：五套模型的单位、转换、截距；[完整脚本](examples/03_existing_coefficients.R)。
-5. [Cox 专门教程](docs/cox-bioage.md)：推导、校准、保存模型、旧版本兼容；[在线公式页](https://jerryhaom.github.io/GOLDBioAge/gompertz_cox_formulas.html)。
+1. [Usage：复现 NHANES GOLD 和 Light](Usage.md)：逐步拟合两种模型、对照预期系数、复现计算结果；[完整脚本](examples/04_reproduce_nhanes.R)。
+2. [公式与代码对照](docs/mathematics-and-code.md)：每个符号对应什么、加权和怎样算、权重和截距怎样得到。
+3. [模拟 Gompertz 教程](docs/simulated-gompertz.md)：生成事件和删失，分训练/测试，拟合 GOLD/Cox 后固定系数预测；[完整脚本](examples/01_simulated_gompertz.R)。
+4. [NHANES 教程](docs/nhanes.md)：检查数据、复现系数、保留行序、固定模型计算；[完整脚本](examples/02_nhanes.R)。
+5. [原有数据库系数与案例](Coefficients.md)：五套模型的单位、转换、截距；[完整脚本](examples/03_existing_coefficients.R)。
+6. [Cox 专门教程](docs/cox-bioage.md)：推导、校准、保存模型、旧版本兼容；[在线公式页](https://jerryhaom.github.io/GOLDBioAge/gompertz_cox_formulas.html)。
 
 ## 6. 更新说明
 
